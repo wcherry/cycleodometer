@@ -73,6 +73,7 @@ struct RideView: View {
                 showsGrade: ride.canMeasureGrade
             )
                 .containerRelativeFrame(.horizontal) { width, _ in width * 0.95 }
+                .padding(.top, 12)
 
             HStack(spacing: 16) {
                 StatTile(title: "DISTANCE") {
