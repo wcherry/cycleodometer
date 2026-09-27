@@ -76,6 +76,9 @@ struct RouteStartView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                // Directions in the app, drawn on the ride map, until you reach the route.
+                startButton("Ride to Start", systemImage: "arrow.triangle.turn.up.right.diamond.fill", rideToStart: true)
+
                 HStack(spacing: 12) {
                     Button("Apple Maps", systemImage: "map") {
                         if let url = MapLinks.appleDirections(to: start) { openURL(url) }
@@ -87,7 +90,7 @@ struct RouteStartView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.large)
 
-                startButton("Start Anyway")
+                startButton("Start Anyway", prominent: false)
             }
         } else {
             VStack(spacing: 8) {
@@ -101,18 +104,25 @@ struct RouteStartView: View {
         }
     }
 
-    private func startButton(_ title: String) -> some View {
-        Button {
-            ride.start(following: route, track: track)
+    @ViewBuilder
+    private func startButton(_ title: String, systemImage: String = "play.fill",
+                             rideToStart: Bool = false, prominent: Bool = true) -> some View {
+        let button = Button {
+            ride.start(following: route, track: track, library: library, rideToStart: rideToStart)
         } label: {
-            Label(title, systemImage: "play.fill")
+            Label(title, systemImage: systemImage)
                 .font(.headline)
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
         .tint(.green)
         .controlSize(.large)
         .disabled(track?.isEmpty ?? true)
+
+        if prominent {
+            button.buttonStyle(.borderedProminent)
+        } else {
+            button.buttonStyle(.bordered)
+        }
     }
 }
 

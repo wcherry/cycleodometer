@@ -28,6 +28,10 @@ struct RideView: View {
         .sensoryFeedback(.warning, trigger: isOffRoute) { _, offRoute in offRoute }
         .sensoryFeedback(.success, trigger: isOffRoute) { wasOff, offRoute in wasOff && !offRoute }
         .sensoryFeedback(.success, trigger: ride.follower?.isFinished ?? false) { _, finished in finished }
+        // A light tap about 150 m before each turn and again at 30 m.
+        .sensoryFeedback(.impact(weight: .light), trigger: cueStage) { old, new in
+            new.stage > 0 && (new.kind != old.kind || new.stage > old.stage)
+        }
         .onChange(of: isOffRoute) { wasOff, offRoute in
             if wasOff && !offRoute { recentlyRejoined = true }
         }
@@ -41,7 +45,17 @@ struct RideView: View {
     private var isOffRoute: Bool { ride.follower?.isOffRoute ?? false }
 
     private var routeStatus: RouteStatus? {
-        ride.follower.map { RouteStatus(follower: $0, recentlyRejoined: recentlyRejoined) }
+        ride.follower.map { RouteStatus(follower: $0, recentlyRejoined: recentlyRejoined, cue: ride.currentCue) }
+    }
+
+    private struct CueStage: Equatable {
+        var kind: Cue.Kind?
+        var stage: Int
+    }
+
+    private var cueStage: CueStage {
+        let cue = ride.currentCue
+        return CueStage(kind: cue?.kind, stage: cue?.stage ?? 0)
     }
 
     private var gauge: some View {

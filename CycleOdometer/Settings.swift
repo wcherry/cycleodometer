@@ -103,9 +103,16 @@ enum RiderType: String, CaseIterable, Identifiable {
     }
 }
 
+/// Whether turn cues look up street names with Apple Maps. On unless turned off.
+enum StreetNameSetting {
+    static let key = "streetNames"
+    static var isOn: Bool { UserDefaults.standard.object(forKey: key) as? Bool ?? true }
+}
+
 struct SettingsView: View {
     @AppStorage(UnitSystem.storageKey) private var units = UnitSystem.imperial
     @AppStorage(RiderType.storageKey) private var rider = RiderType.competitive
+    @AppStorage(StreetNameSetting.key) private var streetNames = true
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -131,6 +138,14 @@ struct SettingsView: View {
                     Text("Rider")
                 } footer: {
                     Text("The speed gauge runs from 0 to \(Int(rider.gaugeMax(in: units))) \(units.speedLabel.lowercased()).")
+                }
+
+                Section {
+                    Toggle("Street Names", isOn: $streetNames)
+                } header: {
+                    Text("Turn Cues")
+                } footer: {
+                    Text("Shows the street each turn leads onto, looked up with Apple Maps. This sends your route's turn points to Apple; your rides themselves never leave your phone.")
                 }
             }
             .navigationTitle("Settings")

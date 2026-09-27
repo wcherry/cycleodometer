@@ -19,6 +19,16 @@ struct SavedRoute: Codable, Identifiable, Hashable {
     var distance: Double
     /// Total climb in metres, when the route has elevations.
     var elevationGain: Double?
+    /// Street names found for the route's turns, saved so each is looked up once.
+    var turnNames: TurnNames?
+}
+
+struct TurnNames: Codable, Hashable {
+    /// How many turns the route had when named; if turn detection ever changes,
+    /// a different count means the names no longer line up and are discarded.
+    var turnCount: Int
+    /// One per turn looked up so far, in order; "" where there was no name.
+    var names: [String]
 }
 
 /// Saved routes, newest first. Each route's geometry is a GPX file in
@@ -122,6 +132,12 @@ final class RouteLibrary {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let index = routes.firstIndex(where: { $0.id == route.id }) else { return }
         routes[index].name = name
+        save()
+    }
+
+    func saveTurnNames(_ names: TurnNames, for route: SavedRoute) {
+        guard let index = routes.firstIndex(where: { $0.id == route.id }) else { return }
+        routes[index].turnNames = names
         save()
     }
 

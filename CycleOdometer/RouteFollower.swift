@@ -36,9 +36,10 @@ struct RouteFollower {
     static let finishDistance = 30.0
 
     /// The route as one line, in order.
-    let coordinates: [CLLocationCoordinate2D]
-    /// Length of `coordinates`, in metres.
-    let length: Double
+    let line: Polyline
+    var coordinates: [CLLocationCoordinate2D] { line.coordinates }
+    /// Length of the route, in metres.
+    var length: Double { line.length }
 
     private(set) var hasJoined = false
     /// Distance along the route to your matched position, in metres.
@@ -50,67 +51,32 @@ struct RouteFollower {
     /// Degrees clockwise from north from you to that nearest point of the route.
     private(set) var bearingToRoute: Double?
 
-    private let xy: [SIMD2<Double>]
-    private let cumulative: [Double]
-    private let origin: CLLocationCoordinate2D
-    private let metersPerDegreeLongitude: Double
-    private static let metersPerDegreeLatitude = 110_540.0
+    /// When the current spell off route began (off route or not yet declared so).
+    private(set) var offRouteSince: Date?
 
     private var farSince: Date?
-    private var offSince: Date?
 
     init?(track: Track) {
-        var points: [CLLocationCoordinate2D] = []
-        for point in track.drawableSegments.joined() where points.last.map({
-            $0.latitude != point.latitude || $0.longitude != point.longitude
-        }) ?? true {
-            points.append(point.coordinate)
-        }
-        guard points.count >= 2 else { return nil }
-        coordinates = points
-        origin = points[0]
-        metersPerDegreeLongitude = 111_320 * cos(origin.latitude * .pi / 180)
-
-        let xy = points.map {
-            SIMD2(($0.longitude - points[0].longitude) * 111_320 * cos(points[0].latitude * .pi / 180),
-                  ($0.latitude - points[0].latitude) * Self.metersPerDegreeLatitude)
-        }
-        var cumulative = [0.0]
-        for i in 1..<xy.count {
-            cumulative.append(cumulative[i - 1] + Self.length(xy[i] - xy[i - 1]))
-        }
-        self.xy = xy
-        self.cumulative = cumulative
-        length = cumulative.last ?? 0
+        guard let line = Polyline(track.drawableSegments.joined().map(\.coordinate)) else { return nil }
+        self.line = line
     }
 
     /// The part of the route already ridden, for drawing.
     var doneCoordinates: [CLLocationCoordinate2D] {
-        guard hasJoined, progress > 0 else { return [] }
-        var done: [CLLocationCoordinate2D] = []
-        for i in coordinates.indices {
-            if cumulative[i] <= progress {
-                done.append(coordinates[i])
-            } else {
-                let t = (progress - cumulative[i - 1]) / (cumulative[i] - cumulative[i - 1])
-                done.append(coordinate(xy[i - 1] + t * (xy[i] - xy[i - 1])))
-                break
-            }
-        }
-        return done
+        hasJoined ? line.coordinates(upTo: progress) : []
     }
 
     var remaining: Double { max(length - progress, 0) }
 
     /// Matches a GPS fix to the route. Returns what changed, if anything.
     mutating func update(_ position: CLLocationCoordinate2D, accuracy: Double, at time: Date) -> Event? {
-        let p = project(position)
+        let p = line.project(position)
         let offDistance = max(Self.offRouteDistance, 2 * accuracy)
 
         guard hasJoined else {
             // Progress starts wherever you first reach the route, preferring the
             // earliest point: at the start of a loop, the finish is just as close.
-            let match = bestMatch(for: p, in: 0..<(xy.count - 1), preferAlong: 0)
+            let match = bestMatch(for: p, in: 0..<line.segmentCount, preferAlong: 0)
             record(match, from: p)
             guard match.distance <= Self.backOnDistance else { return nil }
             hasJoined = true
@@ -127,7 +93,7 @@ struct RouteFollower {
             let since = farSince ?? time
             farSince = since
             if time.timeIntervalSince(since) >= Self.recoveryDelay {
-                let anywhere = bestMatch(for: p, in: 0..<(xy.count - 1), preferAlong: progress)
+                let anywhere = bestMatch(for: p, in: 0..<line.segmentCount, preferAlong: progress)
                 if anywhere.distance < match.distance { match = anywhere }
                 if anywhere.distance <= Self.backOnDistance {
                     farSince = nil
@@ -141,18 +107,18 @@ struct RouteFollower {
         if isOffRoute {
             if match.distance < Self.backOnDistance {
                 isOffRoute = false
-                offSince = nil
+                offRouteSince = nil
                 event = .rejoined
             }
         } else if match.distance > offDistance {
-            let since = offSince ?? time
-            offSince = since
+            let since = offRouteSince ?? time
+            offRouteSince = since
             if time.timeIntervalSince(since) > Self.offRouteDelay {
                 isOffRoute = true
                 event = .leftRoute
             }
         } else {
-            offSince = nil
+            offRouteSince = nil
         }
 
         if !isFinished, !isOffRoute, length - progress <= Self.finishDistance {
@@ -172,21 +138,15 @@ struct RouteFollower {
 
     private func windowSegments() -> Range<Int> {
         let low = progress - Self.windowBehind, high = progress + Self.windowAhead
-        let first = cumulative.firstIndex { $0 >= low }.map { max($0 - 1, 0) } ?? 0
-        let last = cumulative.firstIndex { $0 > high } ?? (xy.count - 1)
+        let first = line.cumulative.firstIndex { $0 >= low }.map { max($0 - 1, 0) } ?? 0
+        let last = line.cumulative.firstIndex { $0 > high } ?? line.segmentCount
         return first..<max(last, first + 1)
     }
 
     private func bestMatch(for p: SIMD2<Double>, in segments: Range<Int>, preferAlong target: Double) -> Match {
-        var matches: [(segment: Int, match: Match)] = []
-        for i in segments {
-            let a = xy[i], b = xy[i + 1], ab = b - a
-            let lengthSquared = (ab * ab).sum()
-            let t = lengthSquared > 0 ? min(max(((p - a) * ab).sum() / lengthSquared, 0), 1) : 0
-            let point = a + t * ab
-            matches.append((i, Match(distance: Self.length(p - point),
-                                     along: cumulative[i] + t * (cumulative[i + 1] - cumulative[i]),
-                                     point: point)))
+        let matches = segments.map { i in
+            let projected = line.projection(of: p, ontoSegment: i)
+            return (segment: i, match: Match(distance: projected.distance, along: projected.along, point: projected.point))
         }
         let closest = matches.map(\.match.distance).min() ?? .infinity
 
@@ -220,21 +180,6 @@ struct RouteFollower {
 
     private mutating func record(_ match: Match, from p: SIMD2<Double>) {
         distanceFromRoute = match.distance
-        let delta = match.point - p
-        bearingToRoute = (atan2(delta.x, delta.y) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
-    }
-
-    private func project(_ c: CLLocationCoordinate2D) -> SIMD2<Double> {
-        SIMD2((c.longitude - origin.longitude) * metersPerDegreeLongitude,
-              (c.latitude - origin.latitude) * Self.metersPerDegreeLatitude)
-    }
-
-    private func coordinate(_ p: SIMD2<Double>) -> CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: origin.latitude + p.y / Self.metersPerDegreeLatitude,
-                               longitude: origin.longitude + p.x / metersPerDegreeLongitude)
-    }
-
-    private static func length(_ v: SIMD2<Double>) -> Double {
-        (v * v).sum().squareRoot()
+        bearingToRoute = Polyline.bearing(from: p, to: match.point)
     }
 }

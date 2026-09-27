@@ -37,6 +37,14 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     /// Progress along `route`. Only updated while the timer runs, so stopping at a
     /// café off the route doesn't raise an off-route alert.
     private(set) var follower: RouteFollower?
+    /// The route's turns, with street names as they're found.
+    private(set) var turns: [Turn] = []
+    /// Apple's directions to the route's start (Ride to Start), until you reach it.
+    private(set) var approach: GuidanceLeg?
+    /// Apple's directions back onto the route after a minute off it.
+    private(set) var routeBack: GuidanceLeg?
+    /// Where Apple's directions come from; tests substitute canned answers.
+    @ObservationIgnored var directions: DirectionsProvider = MapKitDirections()
 
     private var accumulated: TimeInterval = 0
     @ObservationIgnored private var startDate = Date.now
@@ -47,6 +55,24 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     @ObservationIgnored private var recorder = TrackRecorder()
     /// Points added to the last map polyline since it was last simplified.
     @ObservationIgnored private var unsimplifiedCount = 0
+
+    @ObservationIgnored private weak var library: RouteLibrary?
+    @ObservationIgnored private var wantsApproach = false
+    @ObservationIgnored private var approachAttempts = 0
+    @ObservationIgnored private var legRequest: Task<Void, Never>?
+    @ObservationIgnored private var lastLegRequest: Date?
+    @ObservationIgnored private var naming: Task<Void, Never>?
+
+    /// Directions back to the route are offered after this long off it...
+    static let routeBackDelay: TimeInterval = 60
+    /// ...to a point this far ahead of where you left it, so you aren't sent back.
+    static let rejoinAhead = 300.0
+    /// Directions are requested at most this often, and Ride to Start tries this
+    /// many times before settling for a bearing and distance.
+    static let legRequestInterval: TimeInterval = 30
+    static let maxApproachAttempts = 3
+    /// Pause between street-name lookups, to stay well within Apple's limits.
+    static let namingInterval: Duration = .seconds(1.5)
 
     /// Re-simplify the map polyline after this many new points, to about 3 m.
     private static let mapSimplifyInterval = 200
@@ -78,9 +104,22 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     }
 
     /// Starts a ride, following `route` (whose geometry is `track`) if given.
-    func start(following route: SavedRoute? = nil, track: Track? = nil) {
+    /// `rideToStart` asks for directions to the route's start first. Street names
+    /// found for its turns are saved to `library`.
+    func start(following route: SavedRoute? = nil, track: Track? = nil,
+               library: RouteLibrary? = nil, rideToStart: Bool = false) {
         self.route = route
+        self.library = library
         follower = track.flatMap(RouteFollower.init(track:))
+        turns = follower.map { TurnDetector.turns(in: $0.line) } ?? []
+        approach = nil
+        routeBack = nil
+        wantsApproach = rideToStart && follower != nil
+        approachAttempts = 0
+        lastLegRequest = nil
+        if let route, !turns.isEmpty {
+            nameTurns(of: route)
+        }
         speed = 0
         maxSpeed = 0
         distance = 0
@@ -125,8 +164,15 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         manager.stopUpdatingHeading()
         altimeter.stopRelativeAltitudeUpdates()
         heading = nil
+        naming?.cancel()
+        legRequest?.cancel()
+        naming = nil
+        legRequest = nil
         route = nil
         follower = nil
+        turns = []
+        approach = nil
+        routeBack = nil
         manager.allowsBackgroundLocationUpdates = false
         UIApplication.shared.isIdleTimerDisabled = false
         isActive = false
@@ -179,7 +225,121 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
             }
             lastLocation = location
             record(location)
-            _ = follower?.update(location.coordinate, accuracy: location.horizontalAccuracy, at: location.timestamp)
+            if var follower {
+                _ = follower.update(location.coordinate, accuracy: location.horizontalAccuracy, at: location.timestamp)
+                self.follower = follower
+                updateGuidance(at: location, on: follower)
+            }
+        }
+    }
+
+    // MARK: Route guidance
+
+    /// The next thing to tell the rider: a turn on the route, or a step of the
+    /// directions to its start or back onto it.
+    var currentCue: Cue? {
+        guard let follower else { return nil }
+        if !follower.hasJoined, let step = approach?.nextStep {
+            return Cue(kind: .leg(.toStart, step: step.index), symbol: DirectionText.symbol(for: step.instructions),
+                       instruction: step.instructions, distance: step.distance)
+        }
+        if follower.isOffRoute, let step = routeBack?.nextStep {
+            return Cue(kind: .leg(.backToRoute, step: step.index), symbol: DirectionText.symbol(for: step.instructions),
+                       instruction: step.instructions, distance: step.distance)
+        }
+        guard follower.hasJoined, !follower.isOffRoute, !follower.isFinished,
+              let index = turns.firstIndex(where: { $0.along > follower.progress + 5 }) else { return nil }
+        let turn = turns[index]
+        return Cue(kind: .turn(index), symbol: turn.direction.symbol, instruction: turn.direction.phrase,
+                   street: turn.streetName, distance: turn.along - follower.progress)
+    }
+
+    private func updateGuidance(at location: CLLocation, on follower: RouteFollower) {
+        let position = location.coordinate, time = location.timestamp
+
+        // Riding to the start: directions until the route is reached.
+        if follower.hasJoined {
+            approach = nil
+            wantsApproach = false
+        } else if wantsApproach {
+            if var leg = approach {
+                approach = leg.update(position, at: time) ? leg : nil
+            }
+            if approach == nil, approachAttempts < Self.maxApproachAttempts, let start = follower.coordinates.first {
+                requestLeg(.toStart, from: position, to: start)
+            }
+        }
+
+        // Back to the route after a minute off it, rejoining a little further on.
+        if !follower.isOffRoute {
+            routeBack = nil
+        } else if let since = follower.offRouteSince, time.timeIntervalSince(since) >= Self.routeBackDelay {
+            if var leg = routeBack {
+                routeBack = leg.update(position, at: time) ? leg : nil
+            }
+            if routeBack == nil {
+                let rejoin = follower.line.coordinate(follower.line.point(at: follower.progress + Self.rejoinAhead))
+                requestLeg(.backToRoute, from: position, to: rejoin)
+            }
+        }
+    }
+
+    private func requestLeg(_ purpose: GuidanceLeg.Purpose, from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) {
+        guard legRequest == nil,
+              lastLegRequest.map({ Date.now.timeIntervalSince($0) >= Self.legRequestInterval }) ?? true else { return }
+        lastLegRequest = .now
+        if purpose == .toStart { approachAttempts += 1 }
+        let provider = directions
+        legRequest = Task { @MainActor [weak self] in
+            let route = try? await provider.cyclingRoute(from: from, to: to)
+            guard let self, !Task.isCancelled else { return }
+            self.legRequest = nil
+            guard let route, let leg = GuidanceLeg(purpose: purpose, route: route) else { return }
+            // Only if it's still wanted: you may have reached the route meanwhile.
+            switch purpose {
+            case .toStart where self.wantsApproach && self.follower?.hasJoined == false:
+                self.approach = leg
+            case .backToRoute where self.follower?.isOffRoute == true:
+                self.routeBack = leg
+            default:
+                break
+            }
+        }
+    }
+
+    /// Fills in street names for the route's turns: saved ones straight away, the
+    /// rest looked up one at a time in the background and saved as they're found,
+    /// so a route is only ever looked up once. Lookups that fail (offline) aren't
+    /// saved, and are tried again the next time the route is ridden.
+    private func nameTurns(of route: SavedRoute) {
+        var names: [String] = []
+        if let saved = route.turnNames, saved.turnCount == turns.count {
+            names = saved.names
+        }
+        for (index, name) in names.enumerated() where !name.isEmpty && index < turns.count {
+            turns[index].streetName = name
+        }
+        guard StreetNameSetting.isOn, names.count < turns.count, let line = follower?.line else { return }
+
+        let turnsToName = turns, provider = directions, alreadyNamed = names
+        naming = Task { @MainActor [weak self] in
+            var names = alreadyNamed
+            for index in alreadyNamed.count..<turnsToName.count {
+                if index > alreadyNamed.count { try? await Task.sleep(for: Self.namingInterval) }
+                guard !Task.isCancelled else { return }
+                let lookup = await StreetNames.name(forTurn: index, of: turnsToName, on: line, using: provider)
+                guard let self, !Task.isCancelled else { return }
+                switch lookup {
+                case .failed:
+                    return
+                case .notFound:
+                    names.append("")
+                case .found(let name):
+                    names.append(name)
+                    if index < self.turns.count { self.turns[index].streetName = name }
+                }
+                self.library?.saveTurnNames(TurnNames(turnCount: turnsToName.count, names: names), for: route)
+            }
         }
     }
 

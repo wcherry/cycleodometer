@@ -42,6 +42,11 @@ struct RideMapView: View {
                     }
                 }
             }
+            // Apple's directions to the start or back to the route, dashed.
+            if let leg = ride.approach ?? ride.routeBack {
+                MapPolyline(coordinates: leg.line.coordinates)
+                    .stroke(Color.cyan, style: StrokeStyle(lineWidth: 6, lineCap: .round, dash: [10, 10]))
+            }
             ForEach(ride.mapTrack.indices, id: \.self) { index in
                 let segment = ride.mapTrack[index]
                 if segment.count >= 2 {
@@ -60,7 +65,7 @@ struct RideMapView: View {
             VStack(spacing: 10) {
                 topBar
                 // Progress is in the stats strip; the card is for everything else.
-                if let follower = ride.follower, let routeStatus, routeStatus != .onRoute {
+                if let follower = ride.follower, let routeStatus, !routeStatus.isQuiet {
                     RouteStatusCard(status: routeStatus, follower: follower,
                                     routeName: ride.route?.name ?? "Route", heading: ride.heading, onMap: true)
                         .padding(.horizontal)
