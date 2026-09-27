@@ -28,7 +28,13 @@ targets:
         NSAppleMusicUsageDescription: Used to play and pause your music during a ride.
         # Lets Open in Google Maps send 9 waypoints to the app instead of 3 to a browser.
         LSApplicationQueriesSchemes: [comgooglemaps]
-        # GPX: what routes are shared as (and, from phase 3, imported from).
+        # GPX: what routes are shared as and imported from. Opening a .gpx file from
+        # another app hands Cycle a copy (not in place), which it imports and deletes.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: GPX Route
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [com.topografix.gpx]
+        LSSupportsOpeningDocumentsInPlace: false
         UTImportedTypeDeclarations:
           - UTTypeIdentifier: com.topografix.gpx
             UTTypeDescription: GPS Exchange Format

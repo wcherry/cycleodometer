@@ -11,15 +11,37 @@ struct RideView: View {
     /// When the warning flasher was switched on, or nil when it's off.
     @State private var warningSince: Date?
     @State private var showingMap = false
+    /// Set briefly after rejoining the route, to show "Back on route".
+    @State private var recentlyRejoined = false
 
     private let buttonSpacing: CGFloat = 16
 
     var body: some View {
-        if showingMap {
-            RideMapView(ride: ride) { showingMap = false }
-        } else {
-            gauge
+        Group {
+            if showingMap {
+                RideMapView(ride: ride, routeStatus: routeStatus) { showingMap = false }
+            } else {
+                gauge
+            }
         }
+        // On both screens: the alerts matter most when you aren't looking.
+        .sensoryFeedback(.warning, trigger: isOffRoute) { _, offRoute in offRoute }
+        .sensoryFeedback(.success, trigger: isOffRoute) { wasOff, offRoute in wasOff && !offRoute }
+        .sensoryFeedback(.success, trigger: ride.follower?.isFinished ?? false) { _, finished in finished }
+        .onChange(of: isOffRoute) { wasOff, offRoute in
+            if wasOff && !offRoute { recentlyRejoined = true }
+        }
+        .task(id: recentlyRejoined) {
+            guard recentlyRejoined else { return }
+            try? await Task.sleep(for: .seconds(4))
+            recentlyRejoined = false
+        }
+    }
+
+    private var isOffRoute: Bool { ride.follower?.isOffRoute ?? false }
+
+    private var routeStatus: RouteStatus? {
+        ride.follower.map { RouteStatus(follower: $0, recentlyRejoined: recentlyRejoined) }
     }
 
     private var gauge: some View {
@@ -49,6 +71,11 @@ struct RideView: View {
                         Text(Self.format(ride.elapsed(at: context.date)))
                     }
                 }
+            }
+
+            if let follower = ride.follower, let status = routeStatus {
+                RouteStatusCard(status: status, follower: follower,
+                                routeName: ride.route?.name ?? "Route", heading: ride.heading)
             }
 
             Spacer(minLength: 0)
@@ -309,7 +336,7 @@ private struct ControlButton: View {
 
 /// A tinted rounded rectangle on an opaque black base, so tiles and buttons stay
 /// readable while the warning flasher turns the screen behind them red.
-private struct TilePlate: View {
+struct TilePlate: View {
     var cornerRadius: CGFloat
     var tint: Color
 

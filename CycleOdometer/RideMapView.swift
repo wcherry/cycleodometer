@@ -5,6 +5,7 @@ import SwiftUI
 /// strip of speed, distance and time. Pause and End stay on the gauge screen.
 struct RideMapView: View {
     var ride: RideTracker
+    var routeStatus: RouteStatus?
     var onClose: () -> Void
 
     @AppStorage(UnitSystem.storageKey) private var units = UnitSystem.imperial
@@ -18,6 +19,29 @@ struct RideMapView: View {
 
     var body: some View {
         Map(position: $position) {
+            // The route in grey, the part already ridden in blue, your track in green.
+            if let follower = ride.follower {
+                MapPolyline(coordinates: follower.coordinates)
+                    .stroke(Color.gray.opacity(0.9), style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+                let done = follower.doneCoordinates
+                if done.count >= 2 {
+                    MapPolyline(coordinates: done)
+                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+                }
+                // A small flag rather than a balloon, so it doesn't cover you. Left off
+                // loops, where the finish is the start.
+                if let start = follower.coordinates.first, let finish = follower.coordinates.last,
+                   CLLocation(latitude: start.latitude, longitude: start.longitude)
+                       .distance(from: CLLocation(latitude: finish.latitude, longitude: finish.longitude)) > 50 {
+                    Annotation("Finish", coordinate: finish) {
+                        Image(systemName: "flag.checkered")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(6)
+                            .background(Circle().fill(Color.black))
+                    }
+                }
+            }
             ForEach(ride.mapTrack.indices, id: \.self) { index in
                 let segment = ride.mapTrack[index]
                 if segment.count >= 2 {
@@ -32,7 +56,17 @@ struct RideMapView: View {
             MapScaleView()
         }
         .onAppear { position = following }
-        .safeAreaInset(edge: .top) { topBar }
+        .safeAreaInset(edge: .top) {
+            VStack(spacing: 10) {
+                topBar
+                // Progress is in the stats strip; the card is for everything else.
+                if let follower = ride.follower, let routeStatus, routeStatus != .onRoute {
+                    RouteStatusCard(status: routeStatus, follower: follower,
+                                    routeName: ride.route?.name ?? "Route", heading: ride.heading, onMap: true)
+                        .padding(.horizontal)
+                }
+            }
+        }
         .safeAreaInset(edge: .bottom) { statsStrip }
     }
 
@@ -73,6 +107,21 @@ struct RideMapView: View {
     }
 
     private var statsStrip: some View {
+        VStack(spacing: 6) {
+            stats
+            if let follower = ride.follower, follower.hasJoined {
+                Text(units.progress(follower))
+                    .font(.subheadline.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 12)
+        .glassEffect(.regular, in: .rect(cornerRadius: 24))
+        .padding(.horizontal)
+    }
+
+    private var stats: some View {
         HStack(spacing: 0) {
             MapStat(value: units.speed(ride.speed).formatted(.number.precision(.fractionLength(1))),
                     unit: units.speedLabel.lowercased())
@@ -83,9 +132,6 @@ struct RideMapView: View {
                         unit: ride.isRunning ? "time" : "paused")
             }
         }
-        .padding(.vertical, 12)
-        .glassEffect(.regular, in: .rect(cornerRadius: 24))
-        .padding(.horizontal)
     }
 
     /// `H:MM:SS`, or `MM:SS` under an hour. Whole seconds: tenths would flicker.

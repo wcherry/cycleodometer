@@ -5,6 +5,7 @@ struct StartView: View {
     var onStart: () -> Void
 
     @State private var showingHistory = false
+    @State private var pickingRoute = false
 
     var body: some View {
         ZStack {
@@ -28,23 +29,38 @@ struct StartView: View {
                 .padding(.trailing, 24)
         }
         .overlay(alignment: .bottom) {
-            Button {
-                showingHistory = true
-            } label: {
-                Label("Ride History", systemImage: "clock.arrow.circlepath")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 16)
-                    .background(Capsule().fill(Color.white.opacity(0.12)))
+            VStack(spacing: 12) {
+                bottomButton("Ride a Route", systemImage: "point.topleft.down.to.point.bottomright.curvepath") {
+                    pickingRoute = true
+                }
+                bottomButton("Ride History", systemImage: "clock.arrow.circlepath") {
+                    showingHistory = true
+                }
             }
-            .buttonStyle(PressScaleStyle())
             .padding(.bottom, 32)
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView(history: history)
         }
+        .sheet(isPresented: $pickingRoute) {
+            NavigationStack {
+                RoutesView(picking: true)
+            }
+        }
     }
+}
+
+private func bottomButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        Label(title, systemImage: systemImage)
+            .font(.headline)
+            .foregroundStyle(.white)
+            .frame(minWidth: 200)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 16)
+            .background(Capsule().fill(Color.white.opacity(0.12)))
+    }
+    .buttonStyle(PressScaleStyle())
 }
 
 struct PressScaleStyle: ButtonStyle {

@@ -72,6 +72,52 @@ final class RouteLibrary {
         return route
     }
 
+    enum ImportError: LocalizedError, Equatable {
+        case tooLarge
+        case unreadable
+        case notGPX
+        case noRoute
+
+        var errorDescription: String? {
+            switch self {
+            case .tooLarge: "This file is over 20 MB, which is too large for one route."
+            case .unreadable: "The file couldn't be read."
+            case .notGPX: "This isn't a GPX file Cycle can read."
+            case .noRoute: "This file has no route in it."
+            }
+        }
+    }
+
+    static let importSizeLimit = 20 * 1_024 * 1_024
+
+    /// Imports a GPX file as a new route, named from the file's `<name>` or, failing
+    /// that, its file name. Works with files from the file picker (security-scoped)
+    /// and ones handed over by other apps.
+    @discardableResult
+    func importGPX(from url: URL) throws -> SavedRoute {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+
+        if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size > Self.importSizeLimit {
+            throw ImportError.tooLarge
+        }
+        guard let data = try? Data(contentsOf: url) else { throw ImportError.unreadable }
+
+        let parsed: (name: String?, track: Track)
+        do {
+            parsed = try GPX.parse(data)
+        } catch GPX.ParseError.noTrack {
+            throw ImportError.noRoute
+        } catch {
+            throw ImportError.notGPX
+        }
+        let name = parsed.name ?? url.deletingPathExtension().lastPathComponent
+        guard let route = add(name: name, track: parsed.track, source: .imported) else {
+            throw ImportError.unreadable
+        }
+        return route
+    }
+
     func rename(_ route: SavedRoute, to name: String) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let index = routes.firstIndex(where: { $0.id == route.id }) else { return }

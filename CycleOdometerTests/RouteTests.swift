@@ -130,6 +130,52 @@ private func point(north: Double = 0, east: Double = 0, elevation: Double? = nil
         #expect(RouteLibrary(directory: directory).routes.isEmpty)
     }
 
+    private func file(_ name: String, _ contents: String) throws -> URL {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let url = directory.appending(path: name)
+        try Data(contents.utf8).write(to: url)
+        return url
+    }
+
+    private let twoPoints = """
+        <trkseg><trkpt lat="37.33" lon="-122.03"/><trkpt lat="37.331" lon="-122.03"/></trkseg>
+        """
+
+    @Test func importsWithTheNameInsideTheFile() throws {
+        let library = RouteLibrary(directory: directory.appending(path: "routes"))
+        let url = try file("download.gpx", "<gpx version=\"1.1\"><trk><name>Ridge Ride</name>\(twoPoints)</trk></gpx>")
+        let route = try library.importGPX(from: url)
+        #expect(route.name == "Ridge Ride")
+        #expect(route.source == .imported)
+        #expect(library.routes.first == route)
+    }
+
+    @Test func importFallsBackToTheFileName() throws {
+        let library = RouteLibrary(directory: directory.appending(path: "routes"))
+        let url = try file("Morning Loop.gpx", "<gpx version=\"1.1\"><trk>\(twoPoints)</trk></gpx>")
+        #expect(try library.importGPX(from: url).name == "Morning Loop")
+    }
+
+    @Test func importErrorsSayWhatWentWrong() throws {
+        let library = RouteLibrary(directory: directory.appending(path: "routes"))
+        #expect(throws: RouteLibrary.ImportError.noRoute) {
+            try library.importGPX(from: file("pins.gpx", #"<gpx version="1.1"><wpt lat="37" lon="-122"/></gpx>"#))
+        }
+        #expect(throws: RouteLibrary.ImportError.notGPX) {
+            try library.importGPX(from: file("broken.gpx", "<gpx><trk>"))
+        }
+        #expect(throws: RouteLibrary.ImportError.unreadable) {
+            try library.importGPX(from: directory.appending(path: "missing.gpx"))
+        }
+
+        let huge = try file("huge.gpx", "")
+        let handle = try FileHandle(forWritingTo: huge)
+        try handle.truncate(atOffset: UInt64(RouteLibrary.importSizeLimit + 1))
+        try handle.close()
+        #expect(throws: RouteLibrary.ImportError.tooLarge) { try library.importGPX(from: huge) }
+        #expect(library.routes.isEmpty)
+    }
+
     @Test func refusesAnEmptyTrack() {
         let library = RouteLibrary(directory: directory)
         #expect(library.add(name: "Nothing", track: Track(), source: .imported) == nil)

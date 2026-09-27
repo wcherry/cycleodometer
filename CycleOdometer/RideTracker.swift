@@ -32,6 +32,11 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     /// The track as drawn on the live map: one polyline per segment, simplified so a
     /// long ride doesn't redraw tens of thousands of points on every fix.
     private(set) var mapTrack: [[CLLocationCoordinate2D]] = []
+    /// The route being followed this ride, if any.
+    private(set) var route: SavedRoute?
+    /// Progress along `route`. Only updated while the timer runs, so stopping at a
+    /// café off the route doesn't raise an off-route alert.
+    private(set) var follower: RouteFollower?
 
     private var accumulated: TimeInterval = 0
     @ObservationIgnored private var startDate = Date.now
@@ -72,7 +77,10 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         accumulated + (runningSince.map { date.timeIntervalSince($0) } ?? 0)
     }
 
-    func start() {
+    /// Starts a ride, following `route` (whose geometry is `track`) if given.
+    func start(following route: SavedRoute? = nil, track: Track? = nil) {
+        self.route = route
+        follower = track.flatMap(RouteFollower.init(track:))
         speed = 0
         maxSpeed = 0
         distance = 0
@@ -117,6 +125,8 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         manager.stopUpdatingHeading()
         altimeter.stopRelativeAltitudeUpdates()
         heading = nil
+        route = nil
+        follower = nil
         manager.allowsBackgroundLocationUpdates = false
         UIApplication.shared.isIdleTimerDisabled = false
         isActive = false
@@ -169,6 +179,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
             }
             lastLocation = location
             record(location)
+            _ = follower?.update(location.coordinate, accuracy: location.horizontalAccuracy, at: location.timestamp)
         }
     }
 

@@ -1,24 +1,44 @@
 import MapKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The route library: every saved route, newest first.
+///
+/// From Ride History, a route opens its page. When `picking` (Ride a Route on the
+/// start screen), it goes straight to starting a ride on it.
 struct RoutesView: View {
+    var picking = false
+
     @Environment(RouteLibrary.self) private var library
+    @Environment(\.dismiss) private var dismiss
     @AppStorage(UnitSystem.storageKey) private var units = UnitSystem.imperial
+    @State private var importing = false
+    @State private var importError: String?
 
     var body: some View {
         Group {
             if library.routes.isEmpty {
-                ContentUnavailableView(
-                    "No Routes Yet",
-                    systemImage: "point.topleft.down.to.point.bottomright.curvepath",
-                    description: Text("Open a ride in Ride History and tap Save as Route.")
-                )
+                ContentUnavailableView {
+                    Label("No Routes Yet", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                } description: {
+                    Text("Open a ride in Ride History and tap Save as Route, or import a GPX file from another app.")
+                } actions: {
+                    Button("Import GPX…") { importing = true }
+                        .buttonStyle(.bordered)
+                }
             } else {
                 List {
                     ForEach(library.routes) { route in
-                        NavigationLink(value: route) {
-                            RouteRow(route: route, units: units)
+                        if picking {
+                            NavigationLink {
+                                RouteStartView(route: route)
+                            } label: {
+                                RouteRow(route: route, units: units)
+                            }
+                        } else {
+                            NavigationLink(value: route) {
+                                RouteRow(route: route, units: units)
+                            }
                         }
                     }
                     .onDelete { offsets in
@@ -27,8 +47,32 @@ struct RoutesView: View {
                 }
             }
         }
-        .navigationTitle("Routes")
+        .navigationTitle(picking ? "Ride a Route" : "Routes")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if picking {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button("Import GPX…", systemImage: "square.and.arrow.down") { importing = true }
+            }
+        }
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.gpx, .xml]) { result in
+            do {
+                try library.importGPX(from: result.get())
+            } catch {
+                importError = error.localizedDescription
+            }
+        }
+        .alert("Couldn't Import", isPresented: Binding(
+            get: { importError != nil }, set: { if !$0 { importError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(importError ?? "")
+        }
     }
 }
 
@@ -141,6 +185,17 @@ struct RouteDetailView: View {
                         }
                     }
                 }
+
+                NavigationLink {
+                    RouteStartView(route: current)
+                } label: {
+                    Label("Ride This Route", systemImage: "play.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+                .controlSize(.large)
 
                 Text(current.sourceDescription)
                     .font(.subheadline)
