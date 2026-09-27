@@ -33,7 +33,7 @@ struct HistoryView: View {
                 }
             }
             .navigationDestination(for: RideRecord.self) { ride in
-                RideDetailView(ride: ride, history: history)
+                RideHistoryPager(history: history, showing: ride)
             }
             .navigationDestination(for: SavedRoute.self) { route in
                 RouteDetailView(route: route)

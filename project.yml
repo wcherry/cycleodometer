@@ -31,13 +31,15 @@ targets:
         UILaunchScreen: {}
         UIApplicationSupportsIndirectInputEvents: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        # Keep counting distance when the phone is locked in a handlebar mount.
-        UIBackgroundModes: [location]
+        # Keep counting distance when the phone is locked in a handlebar mount, and keep
+        # speaking turn cues (VoicePrompter) while it is.
+        UIBackgroundModes: [location, audio]
         NSLocationWhenInUseUsageDescription: Your location is used to measure speed and distance while you ride.
         NSMotionUsageDescription: The barometer is used to measure the incline of the road.
         NSAppleMusicUsageDescription: Used to play and pause your music during a ride.
-        # Lets Open in Google Maps send 9 waypoints to the app instead of 3 to a browser.
-        LSApplicationQueriesSchemes: [comgooglemaps]
+        # Which directions apps are installed (Settings > Directions App), and lets Open
+        # in Google Maps send 9 waypoints to the app instead of 3 to a browser.
+        LSApplicationQueriesSchemes: [comgooglemaps, citymapper]
         # GPX: what routes are shared as and imported from. Opening a .gpx file from
         # another app hands Cycle a copy (not in place), which it imports and deletes.
         CFBundleDocumentTypes:

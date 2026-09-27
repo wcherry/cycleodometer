@@ -58,6 +58,7 @@ private let cafe = Destination(name: "Café", subtitle: "1 Main St", coordinate:
         let ride = RideTracker()
         ride.directions = fake
         ride.liveActivity = nil
+        ride.voice = nil
         return ride
     }
 

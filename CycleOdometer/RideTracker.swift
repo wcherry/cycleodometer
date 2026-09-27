@@ -55,6 +55,9 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     @ObservationIgnored var directions: DirectionsProvider = MapKitDirections()
     /// The Dynamic Island / Lock Screen view of the ride; nil in tests.
     @ObservationIgnored var liveActivity: RideLiveActivity? = RideLiveActivity()
+    /// Speaks turn cues (Settings > Turn Cues > Voice Prompts); nil in tests.
+    @ObservationIgnored var voice: VoicePrompter? = VoicePrompter()
+    @ObservationIgnored private var announcer = Announcer()
 
     private var accumulated: TimeInterval = 0
     @ObservationIgnored private var startDate = Date.now
@@ -126,6 +129,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         approach = nil
         routeBack = nil
         wantsApproach = rideToStart && follower != nil
+        announcer = Announcer()
         approachAttempts = 0
         lastLegRequest = nil
         if let route, !turns.isEmpty {
@@ -181,6 +185,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         manager.stopUpdatingHeading()
         altimeter.stopRelativeAltitudeUpdates()
         heading = nil
+        voice?.stop()
         naming?.cancel()
         legRequest?.cancel()
         naming = nil
@@ -249,6 +254,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
                 _ = follower.update(location.coordinate, accuracy: location.horizontalAccuracy, at: location.timestamp)
                 self.follower = follower
                 updateGuidance(at: location, on: follower)
+                announce()
             }
         }
     }
@@ -329,6 +335,19 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         let turn = turns[index]
         return Cue(kind: .turn(index), symbol: turn.direction.symbol, instruction: turn.direction.phrase,
                    street: turn.streetName, distance: turn.along - follower.progress)
+    }
+
+    /// Speaks the next cue, or news about the route, when there's something to say.
+    private func announce() {
+        guard let follower else { return }
+        // Worked out even when voice is off, so turning it on mid-ride doesn't
+        // announce everything that's already happened.
+        let text = announcer.announcement(cue: currentCue, isOffRoute: follower.isOffRoute,
+                                          isFinished: follower.isFinished,
+                                          destinationName: navigation?.destination.name, units: .current)
+        if let text, VoicePromptSetting.isOn {
+            voice?.speak(text)
+        }
     }
 
     private func updateGuidance(at location: CLLocation, on follower: RouteFollower) {

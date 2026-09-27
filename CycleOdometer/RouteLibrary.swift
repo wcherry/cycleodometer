@@ -209,7 +209,8 @@ struct RouteGPXFile: Transferable {
     }
 }
 
-/// Links that open a route, or the way to it, in Google Maps or Apple Maps.
+/// Links that open a route, or the way to it, in another app: Google Maps, Apple Maps
+/// or Citymapper.
 ///
 /// Neither app can import a track, so these are approximations: see "Platform limits"
 /// in docs/features/routes-and-maps.md.
@@ -253,6 +254,13 @@ enum MapLinks {
             URLQueryItem(name: "destination", value: text(destination)),
             URLQueryItem(name: "mode", value: "cycling"),
         ])
+    }
+
+    /// Directions in Citymapper from wherever you are to `destination`.
+    static func citymapperDirections(to destination: CLLocationCoordinate2D, name: String?) -> URL? {
+        var items = [URLQueryItem(name: "endcoord", value: text(destination))]
+        if let name { items.append(URLQueryItem(name: "endname", value: name)) }
+        return url("citymapper://directions", items)
     }
 
     /// Up to `maxCount` interior points of the route, chosen at its biggest turns

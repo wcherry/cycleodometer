@@ -262,13 +262,11 @@ struct RouteDetailView: View {
                 }
 
                 if let start = track.drawableSegments.first?.first?.coordinate {
-                    Section("Directions to Start") {
-                        Button("Apple Maps", systemImage: "map") {
-                            if let url = MapLinks.appleDirections(to: start) { openURL(url) }
-                        }
-                        Button("Google Maps", systemImage: "map") {
-                            if let url = MapLinks.googleDirections(to: start) { openURL(url) }
-                        }
+                    let app = DirectionsApp.preferred()
+                    Button {
+                        if let url = app.directions(to: start, name: "Start of \(current.name)") { openURL(url) }
+                    } label: {
+                        Label("Directions to Start in \(app.name)", systemImage: "map")
                     }
                 }
             }

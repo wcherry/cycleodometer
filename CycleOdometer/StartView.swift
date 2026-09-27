@@ -9,8 +9,10 @@ struct StartView: View {
     @State private var navigating = false
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
+        // The start button centred in the space above the other buttons, so the two
+        // never overlap, whatever the screen size.
+        VStack(spacing: 0) {
+            Spacer(minLength: 24)
             Button(action: onStart) {
                 VStack(spacing: 12) {
                     Image(systemName: "bicycle")
@@ -24,12 +26,8 @@ struct StartView: View {
                 .shadow(color: .green.opacity(0.5), radius: 30)
             }
             .buttonStyle(PressScaleStyle())
-        }
-        .overlay(alignment: .topTrailing) {
-            SettingsButton()
-                .padding(.trailing, 24)
-        }
-        .overlay(alignment: .bottom) {
+            Spacer(minLength: 24)
+
             VStack(spacing: 12) {
                 bottomButton("Ride a Route", systemImage: "point.topleft.down.to.point.bottomright.curvepath") {
                     pickingRoute = true
@@ -42,6 +40,12 @@ struct StartView: View {
                 }
             }
             .padding(.bottom, 32)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black.ignoresSafeArea())
+        .overlay(alignment: .topTrailing) {
+            SettingsButton()
+                .padding(.trailing, 24)
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView(history: history)

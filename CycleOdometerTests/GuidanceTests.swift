@@ -60,6 +60,7 @@ private let routeTrack = Track(segments: [points([(0, 0), (300, 0), (300, 400)])
         let ride = RideTracker()
         ride.directions = fake
         ride.liveActivity = nil
+        ride.voice = nil
         return (ride, library, route)
     }
 

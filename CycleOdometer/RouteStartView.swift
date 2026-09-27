@@ -2,7 +2,8 @@ import CoreLocation
 import SwiftUI
 
 /// The last step before riding a route: the route, how far away its start is, and
-/// Start. Far from the start, it offers directions there in Apple or Google Maps.
+/// Start. Far from the start, it offers directions there, in the app or in the rider's
+/// chosen directions app.
 struct RouteStartView: View {
     var route: SavedRoute
 
@@ -79,13 +80,13 @@ struct RouteStartView: View {
                 // Directions in the app, drawn on the ride map, until you reach the route.
                 startButton("Ride to Start", systemImage: "arrow.triangle.turn.up.right.diamond.fill", rideToStart: true)
 
-                HStack(spacing: 12) {
-                    Button("Apple Maps", systemImage: "map") {
-                        if let url = MapLinks.appleDirections(to: start) { openURL(url) }
-                    }
-                    Button("Google Maps", systemImage: "map") {
-                        if let url = MapLinks.googleDirections(to: start) { openURL(url) }
-                    }
+                let app = DirectionsApp.preferred()
+                Button {
+                    if let url = app.directions(to: start, name: "Start of \(route.name)") { openURL(url) }
+                } label: {
+                    Label("Open in \(app.name)", systemImage: "map")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)

@@ -59,6 +59,7 @@ private func at(_ north: Double, _ east: Double = 0) -> CLLocationCoordinate2D {
 
         let ride = RideTracker()
         ride.liveActivity = nil
+        ride.voice = nil
         ride.directions = FakeDirections()
         UserDefaults.standard.set(false, forKey: StreetNameSetting.key)
         defer { UserDefaults.standard.removeObject(forKey: StreetNameSetting.key) }

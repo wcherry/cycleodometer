@@ -123,20 +123,18 @@ struct RideView: View {
             .frame(height: ControlButton.height)
         }
         .padding()
+        // Settings live on the start screen; mid-ride, only the map is up here.
         .overlay(alignment: .topTrailing) {
-            HStack(spacing: 4) {
-                Button {
-                    showingMap = true
-                } label: {
-                    Image(systemName: "map.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(Color.white.opacity(0.7))
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("Map")
-                SettingsButton()
+            Button {
+                showingMap = true
+            } label: {
+                Image(systemName: "map.fill")
+                    .font(.system(size: 34))
+                    .foregroundStyle(Color.white.opacity(0.7))
+                    .frame(width: 60, height: 60)
+                    .contentShape(Rectangle())
             }
+            .accessibilityLabel("Map")
             .padding(.trailing, 8)
         }
         .overlay(alignment: .topLeading) {

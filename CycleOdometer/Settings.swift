@@ -118,6 +118,10 @@ struct SettingsView: View {
     @AppStorage(UnitSystem.storageKey) private var units = UnitSystem.imperial
     @AppStorage(RiderType.storageKey) private var rider = RiderType.competitive
     @AppStorage(StreetNameSetting.key) private var streetNames = true
+    @AppStorage(VoicePromptSetting.key) private var voicePrompts = true
+    @AppStorage(DirectionsApp.storageKey) private var directionsApp = DirectionsApp.appleMaps
+    /// Worked out once: which directions apps are on this phone.
+    @State private var installedApps = DirectionsApp.installed()
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -146,11 +150,22 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Toggle("Voice Prompts", isOn: $voicePrompts)
                     Toggle("Street Names", isOn: $streetNames)
                 } header: {
                     Text("Turn Cues")
                 } footer: {
-                    Text("Shows the street each turn leads onto, looked up with Apple Maps. This sends your route's turn points to Apple; your rides themselves never leave your phone.")
+                    Text("Voice prompts speak each turn as you approach it, lowering music while they talk. Street names are looked up with Apple Maps, which sends your route's turn points to Apple; your rides themselves never leave your phone.")
+                }
+
+                Section {
+                    Picker("Open Directions In", selection: $directionsApp) {
+                        ForEach(installedApps) { Text($0.name).tag($0) }
+                    }
+                } header: {
+                    Text("Directions App")
+                } footer: {
+                    Text("Used for directions to a route's start. Only apps on this phone are listed; if yours is removed, Apple Maps is used.")
                 }
             }
             .navigationTitle("Settings")

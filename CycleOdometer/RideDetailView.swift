@@ -41,8 +41,6 @@ struct RideDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(ride.date.formatted(.dateTime.weekday(.abbreviated).month().day().hour().minute()))
-        .navigationBarTitleDisplayMode(.inline)
         .task {
             track = await history.loadTrack(for: ride)
             isLoading = false
@@ -112,6 +110,48 @@ struct RideDetailView: View {
                     : "Rides recorded before route recording was added don't have a map.")
             )
             .background(Color.white.opacity(0.06))
+        }
+    }
+}
+
+/// Ride History's detail pages: swipe left for the next (older) ride, right for the
+/// previous (newer) one, in the same order as the list.
+struct RideHistoryPager: View {
+    var history: RideHistory
+    @State private var selection: UUID
+
+    init(history: RideHistory, showing ride: RideRecord) {
+        self.history = history
+        _selection = State(initialValue: ride.id)
+    }
+
+    private var index: Int? {
+        history.rides.firstIndex { $0.id == selection }
+    }
+
+    var body: some View {
+        TabView(selection: $selection) {
+            ForEach(history.rides) { ride in
+                RideDetailView(ride: ride, history: history)
+                    .tag(ride.id)
+            }
+        }
+        // Up to 20 rides: too many for page dots; the title says where you are.
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                if let index {
+                    VStack(spacing: 0) {
+                        Text(history.rides[index].date.formatted(.dateTime.weekday(.abbreviated).month().day().hour().minute()))
+                            .font(.headline)
+                        Text("Ride \(index + 1) of \(history.rides.count)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
         }
     }
 }
