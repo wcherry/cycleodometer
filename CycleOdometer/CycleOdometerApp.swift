@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct CycleOdometerApp: App {
     @State private var ride = RideTracker()
+    @State private var history = RideHistory()
 
     var body: some Scene {
         WindowGroup {
@@ -10,9 +11,10 @@ struct CycleOdometerApp: App {
                 if ride.isActive {
                     RideView(ride: ride)
                 } else {
-                    StartView { ride.start() }
+                    StartView(history: history) { ride.start() }
                 }
             }
+            .environment(history)
             .preferredColorScheme(.dark)
             .animation(.easeInOut, value: ride.isActive)
             #if DEBUG

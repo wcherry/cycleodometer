@@ -7,12 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0247DA926872D77EE6213E40 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BA92FC527EB4ED57F778CF /* Settings.swift */; };
+		0375B581844B778324D6C72D /* RideHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BE9DB60B0CDD581339830D /* RideHistory.swift */; };
+		0FCFF98D51EBF10F932AAC54 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9D8DA170CD07919B455B0B7B /* Assets.xcassets */; };
 		521EFFC7BE299BCB7F82AF54 /* CycleOdometerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6984A3A568C118ABFFE619 /* CycleOdometerApp.swift */; };
 		58CF4590BDBECDCEAF7AEA44 /* Controls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457B2E3E91831E600DC4BDBA /* Controls.swift */; };
 		66396E6B6C0DA18A288E2C09 /* StartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AFDDA9D394AF824CA68728A /* StartView.swift */; };
+		A72F16F97E442329E21886BF /* CompassView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54152D4D1ED844C5541B7451 /* CompassView.swift */; };
 		AD2D7EE9C15655DFC6FFD318 /* SpeedGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464D23EB5E279AB2D5AF22ED /* SpeedGauge.swift */; };
 		C37CFE47F5700FAD59E4D4B3 /* RideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497C1DC7D94EE20F3DEDBA48 /* RideView.swift */; };
 		E77BDC7A2EEB7E3F3759600E /* RideTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A3E2D50CBA48E4BBA06195 /* RideTracker.swift */; };
+		F56BD8C036BA855CDCAFDBFC /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AC8FCAD7884F6552783A88 /* HistoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,10 +25,15 @@
 		464D23EB5E279AB2D5AF22ED /* SpeedGauge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedGauge.swift; sourceTree = "<group>"; };
 		497C1DC7D94EE20F3DEDBA48 /* RideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideView.swift; sourceTree = "<group>"; };
 		4AFDDA9D394AF824CA68728A /* StartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartView.swift; sourceTree = "<group>"; };
+		54152D4D1ED844C5541B7451 /* CompassView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassView.swift; sourceTree = "<group>"; };
 		7F6984A3A568C118ABFFE619 /* CycleOdometerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleOdometerApp.swift; sourceTree = "<group>"; };
+		89AC8FCAD7884F6552783A88 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		9D8DA170CD07919B455B0B7B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B6BE9DB60B0CDD581339830D /* RideHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideHistory.swift; sourceTree = "<group>"; };
 		D9B7A0719302AEC84EA8DBC7 /* CycleOdometer.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CycleOdometer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4520F305083BAED0B38B55B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F8A3E2D50CBA48E4BBA06195 /* RideTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideTracker.swift; sourceTree = "<group>"; };
+		F8BA92FC527EB4ED57F778CF /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -46,11 +56,16 @@
 		7F78ACC4EBF7F57E071D2C01 /* CycleOdometer */ = {
 			isa = PBXGroup;
 			children = (
+				9D8DA170CD07919B455B0B7B /* Assets.xcassets */,
+				54152D4D1ED844C5541B7451 /* CompassView.swift */,
 				457B2E3E91831E600DC4BDBA /* Controls.swift */,
 				7F6984A3A568C118ABFFE619 /* CycleOdometerApp.swift */,
+				89AC8FCAD7884F6552783A88 /* HistoryView.swift */,
 				F4520F305083BAED0B38B55B /* Info.plist */,
+				B6BE9DB60B0CDD581339830D /* RideHistory.swift */,
 				F8A3E2D50CBA48E4BBA06195 /* RideTracker.swift */,
 				497C1DC7D94EE20F3DEDBA48 /* RideView.swift */,
+				F8BA92FC527EB4ED57F778CF /* Settings.swift */,
 				464D23EB5E279AB2D5AF22ED /* SpeedGauge.swift */,
 				4AFDDA9D394AF824CA68728A /* StartView.swift */,
 			);
@@ -65,6 +80,7 @@
 			buildConfigurationList = 02623733093277513453864F /* Build configuration list for PBXNativeTarget "CycleOdometer" */;
 			buildPhases = (
 				0FC75F4A101B8DF80EEA561B /* Sources */,
+				0D926B6BE0899DF443798DC8 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -111,15 +127,30 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		0D926B6BE0899DF443798DC8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FCFF98D51EBF10F932AAC54 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		0FC75F4A101B8DF80EEA561B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A72F16F97E442329E21886BF /* CompassView.swift in Sources */,
 				58CF4590BDBECDCEAF7AEA44 /* Controls.swift in Sources */,
 				521EFFC7BE299BCB7F82AF54 /* CycleOdometerApp.swift in Sources */,
+				F56BD8C036BA855CDCAFDBFC /* HistoryView.swift in Sources */,
+				0375B581844B778324D6C72D /* RideHistory.swift in Sources */,
 				E77BDC7A2EEB7E3F3759600E /* RideTracker.swift in Sources */,
 				C37CFE47F5700FAD59E4D4B3 /* RideView.swift in Sources */,
+				0247DA926872D77EE6213E40 /* Settings.swift in Sources */,
 				AD2D7EE9C15655DFC6FFD318 /* SpeedGauge.swift in Sources */,
 				66396E6B6C0DA18A288E2C09 /* StartView.swift in Sources */,
 			);

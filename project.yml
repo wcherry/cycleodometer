@@ -14,6 +14,10 @@ targets:
       path: CycleOdometer/Info.plist
       properties:
         CFBundleDisplayName: Cycle
+        # Driven from the build settings below, which scripts/deploy_testflight.sh bumps.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UIApplicationSupportsIndirectInputEvents: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -21,6 +25,7 @@ targets:
         # Keep counting distance when the phone is locked in a handlebar mount.
         UIBackgroundModes: [location]
         NSLocationWhenInUseUsageDescription: Your location is used to measure speed and distance while you ride.
+        NSMotionUsageDescription: The barometer is used to measure the incline of the road.
         NSAppleMusicUsageDescription: Used to play and pause your music during a ride.
     settings:
       base:
@@ -31,3 +36,4 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         DEVELOPMENT_TEAM: "46KWJJ63FU"
         CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

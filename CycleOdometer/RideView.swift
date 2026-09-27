@@ -3,26 +3,36 @@ import SwiftUI
 struct RideView: View {
     var ride: RideTracker
 
-    @State private var music = MusicControl()
+    @Environment(RideHistory.self) private var history
+
+    @AppStorage(UnitSystem.storageKey) private var units = UnitSystem.imperial
+    @AppStorage(RiderType.storageKey) private var rider = RiderType.competitive
     @State private var flashlight = Flashlight()
-    @State private var confirmingEnd = false
+    /// When the warning flasher was switched on, or nil when it's off.
+    @State private var warningSince: Date?
+
+    private let buttonSpacing: CGFloat = 16
 
     var body: some View {
         VStack(spacing: 20) {
-            HStack {
-                Spacer()
-                Button("End Ride") { confirmingEnd = true }
-                    .font(.headline)
-                    .tint(.red)
-            }
-
-            SpeedGauge(speed: ride.speed, topSpeed: ride.maxSpeed)
-                .frame(maxWidth: 380)
+            // 95% of the screen width, reaching past the page padding; the ring, its labels
+            // and the top-speed bug all sit inside the gauge's own frame.
+            SpeedGauge(
+                speed: units.speed(ride.speed),
+                topSpeed: units.speed(ride.maxSpeed),
+                maxValue: rider.gaugeMax(in: units),
+                tickStep: rider.tickStep(in: units),
+                unitLabel: units.speedLabel,
+                unitName: units.speedName,
+                grade: ride.grade,
+                showsGrade: ride.canMeasureGrade
+            )
+                .containerRelativeFrame(.horizontal) { width, _ in width * 0.95 }
 
             HStack(spacing: 16) {
                 StatTile(title: "DISTANCE") {
-                    Text(ride.distance, format: .number.precision(.fractionLength(2)))
-                        + Text(" mi").font(.title3).foregroundStyle(.secondary)
+                    Text(units.distance(ride.distance), format: .number.precision(.fractionLength(2)))
+                        + Text(" \(units.distanceLabel)").font(.title3).foregroundStyle(.secondary)
                 }
                 StatTile(title: "TIME") {
                     TimelineView(.periodic(from: .now, by: 0.1)) { context in
@@ -33,38 +43,75 @@ struct RideView: View {
 
             Spacer(minLength: 0)
 
-            HStack(spacing: 16) {
-                ControlButton(
-                    title: ride.isRunning ? "Stop" : "Start",
-                    systemImage: ride.isRunning ? "stop.fill" : "play.fill",
-                    tint: ride.isRunning ? .red : .green
-                ) { ride.toggleTimer() }
+            GeometryReader { proxy in
+                let third = (proxy.size.width - buttonSpacing) / 3
+                ZStack(alignment: .trailing) {
+                    HStack(spacing: buttonSpacing) {
+                        ControlButton(
+                            title: ride.isRunning ? "Pause Ride" : "Resume Ride",
+                            systemImage: ride.isRunning ? "pause.fill" : "play.fill",
+                            tint: ride.isRunning ? .orange : .green
+                        ) { ride.toggleTimer() }
+                        .frame(width: third * 2)
 
-                ControlButton(
-                    title: music.isPlaying ? "Pause" : "Music",
-                    systemImage: music.isPlaying ? "pause.fill" : "music.note",
-                    tint: .pink
-                ) { music.toggle() }
+                        // Paused, the slider's handle takes this slot, drawn over the row below.
+                        lightButton
+                            .frame(width: third)
+                            .opacity(ride.isRunning ? 1 : 0)
+                            .allowsHitTesting(ride.isRunning)
+                    }
 
-                ControlButton(
-                    title: flashlight.isOn ? "Light Off" : "Light",
-                    systemImage: flashlight.isOn ? "flashlight.on.fill" : "flashlight.off.fill",
-                    tint: flashlight.isOn ? .yellow : .gray
-                ) { flashlight.toggle() }
-                .disabled(!flashlight.isAvailable)
+                    if !ride.isRunning {
+                        SlideToEnd(handleWidth: third, onComplete: endRide)
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.2), value: ride.isRunning)
             }
+            .frame(height: ControlButton.height)
         }
         .padding()
-        .background(Color.black.ignoresSafeArea())
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            music.refresh()
+        .overlay(alignment: .topTrailing) {
+            SettingsButton()
+                .padding(.trailing, 8)
         }
-        .confirmationDialog("End this ride?", isPresented: $confirmingEnd, titleVisibility: .visible) {
-            Button("End Ride", role: .destructive) {
-                if flashlight.isOn { flashlight.toggle() }
-                ride.end()
-            }
+        .overlay(alignment: .topLeading) {
+            CompassView(heading: ride.heading)
+                .padding(.leading, 12)
         }
+        .background { WarningBackground(since: warningSince).ignoresSafeArea() }
+    }
+
+    private func endRide() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        if flashlight.isOn { flashlight.toggle() }
+        warningSince = nil
+        history.add(ride.end())
+    }
+
+    /// Tap toggles the flashlight; a long press toggles the red warning flasher.
+    /// While the flasher is on, a tap switches it off too, so it's never hard to stop.
+    private var lightButton: some View {
+        let warning = warningSince != nil
+        return ControlButton(
+            title: warning ? "Warning" : (flashlight.isOn ? "Light Off" : "Light"),
+            systemImage: warning
+                ? "exclamationmark.triangle.fill"
+                : (flashlight.isOn ? "flashlight.on.fill" : "flashlight.off.fill"),
+            tint: warning ? .red : (flashlight.isOn ? .yellow : .gray),
+            action: {
+                if warning {
+                    warningSince = nil
+                } else if flashlight.isAvailable {
+                    flashlight.toggle()
+                }
+            },
+            longPressAction: {
+                warningSince = warning ? nil : .now
+            },
+            longPressName: warning ? "Stop warning flasher" : "Start warning flasher"
+        )
+        .sensoryFeedback(.impact(weight: .heavy), trigger: warning)
     }
 
     /// `H:MM:SS.t`, or `MM:SS.t` under an hour.
@@ -97,28 +144,157 @@ private struct StatTile<Content: View>: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.08)))
+        .background(TilePlate(cornerRadius: 16, tint: Color.white.opacity(0.08)))
+    }
+}
+
+/// Ends the ride only once its handle has been dragged from the right-hand slot all
+/// the way to the left edge of the row — too deliberate to happen by a stray tap or a
+/// bump in the road. Let go short of the edge and the handle springs back.
+private struct SlideToEnd: View {
+    var handleWidth: CGFloat
+    var onComplete: () -> Void
+
+    /// How far the handle has been dragged left: 0 at rest, `-travel` at the end.
+    @State private var offset: CGFloat = 0
+
+    var body: some View {
+        GeometryReader { proxy in
+            let travel = max(proxy.size.width - handleWidth, 1)
+            let progress = -offset / travel
+
+            ZStack(alignment: .trailing) {
+                // Once a drag starts, the track covers the whole row (Resume included) and
+                // points the way; the part behind the handle fills in as it goes.
+                TilePlate(cornerRadius: 20, tint: Color.red.opacity(0.18))
+                    .overlay(alignment: .leading) {
+                        Label("Slide to end", systemImage: "chevron.left.2")
+                            .font(.headline)
+                            .foregroundStyle(.red)
+                            .lineLimit(1)
+                            .padding(.leading, 20)
+                            .opacity(max(0, 1 - progress * 1.6))
+                    }
+                    .opacity(offset < 0 ? 1 : 0)
+
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.red.opacity(0.45))
+                    .frame(width: handleWidth - offset)
+
+                VStack(spacing: 8) {
+                    Image(systemName: "chevron.left.2")
+                        .font(.system(size: 34, weight: .semibold))
+                    Text("End Ride")
+                        .font(.headline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .foregroundStyle(.white)
+                .frame(width: handleWidth)
+                .frame(maxHeight: .infinity)
+                .background(RoundedRectangle(cornerRadius: 20).fill(Color.red))
+                .offset(x: offset)
+                .gesture(
+                    DragGesture(minimumDistance: 4)
+                        .onChanged { value in
+                            offset = min(0, max(-travel, value.translation.width))
+                        }
+                        .onEnded { _ in
+                            // "All the way": the handle has to reach the left edge.
+                            if offset <= -travel + 2 {
+                                onComplete()
+                            } else {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { offset = 0 }
+                            }
+                        }
+                )
+            }
+            .frame(width: proxy.size.width, alignment: .trailing)
+            .sensoryFeedback(.impact(weight: .medium), trigger: progress >= 0.99)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("End ride")
+        .accessibilityHint("Drag left to the edge to end the ride")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { onComplete() }
+    }
+}
+
+/// Flashes the whole screen red and black, twice a second, like a warning light.
+private struct WarningBackground: View {
+    var since: Date?
+
+    private static let interval = 0.5
+
+    var body: some View {
+        if let since {
+            TimelineView(.periodic(from: since, by: Self.interval)) { context in
+                let phase = Int(context.date.timeIntervalSince(since) / Self.interval)
+                (phase.isMultiple(of: 2) ? Color.red : Color.black)
+            }
+        } else {
+            Color.black
+        }
     }
 }
 
 private struct ControlButton: View {
+    static let height: CGFloat = 110
+
     var title: String
     var systemImage: String
     var tint: Color
     var action: () -> Void
+    var longPressAction: (() -> Void)?
+    /// VoiceOver name for the long-press action, which has no gesture there.
+    var longPressName: String = ""
+
+    @State private var isPressed = false
 
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 30, weight: .semibold))
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-            }
-            .frame(maxWidth: .infinity, minHeight: 96)
-            .foregroundStyle(tint)
-            .background(RoundedRectangle(cornerRadius: 20).fill(tint.opacity(0.18)))
+        if let longPressAction {
+            // Not a Button: a Button fires its action on release even after a long press.
+            label
+                .scaleEffect(isPressed ? 0.94 : 1)
+                .animation(.easeOut(duration: 0.15), value: isPressed)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: action)
+                .onLongPressGesture(minimumDuration: 0.6, perform: longPressAction) { isPressed = $0 }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction(named: longPressName, longPressAction)
+        } else {
+            Button(action: action) { label }
+                .buttonStyle(PressScaleStyle())
         }
-        .buttonStyle(PressScaleStyle())
+    }
+
+    private var label: some View {
+        VStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.system(size: 34, weight: .semibold))
+            Text(title)
+                .font(.headline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .foregroundStyle(tint)
+        .background(TilePlate(cornerRadius: 20, tint: tint.opacity(0.18)))
+    }
+}
+
+/// A tinted rounded rectangle on an opaque black base, so tiles and buttons stay
+/// readable while the warning flasher turns the screen behind them red.
+private struct TilePlate: View {
+    var cornerRadius: CGFloat
+    var tint: Color
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius)
+        ZStack {
+            shape.fill(Color.black)
+            shape.fill(tint)
+        }
     }
 }

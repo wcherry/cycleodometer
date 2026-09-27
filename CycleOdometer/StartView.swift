@@ -1,7 +1,10 @@
 import SwiftUI
 
 struct StartView: View {
+    var history: RideHistory
     var onStart: () -> Void
+
+    @State private var showingHistory = false
 
     var body: some View {
         ZStack {
@@ -20,6 +23,27 @@ struct StartView: View {
             }
             .buttonStyle(PressScaleStyle())
         }
+        .overlay(alignment: .topTrailing) {
+            SettingsButton()
+                .padding(.trailing, 24)
+        }
+        .overlay(alignment: .bottom) {
+            Button {
+                showingHistory = true
+            } label: {
+                Label("Ride History", systemImage: "clock.arrow.circlepath")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 16)
+                    .background(Capsule().fill(Color.white.opacity(0.12)))
+            }
+            .buttonStyle(PressScaleStyle())
+            .padding(.bottom, 32)
+        }
+        .sheet(isPresented: $showingHistory) {
+            HistoryView(history: history)
+        }
     }
 }
 
@@ -32,5 +56,5 @@ struct PressScaleStyle: ButtonStyle {
 }
 
 #Preview {
-    StartView {}
+    StartView(history: RideHistory()) {}
 }
