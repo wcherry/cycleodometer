@@ -27,6 +27,42 @@ struct Track: Hashable {
     }
 
     var isEmpty: Bool { drawableSegments.isEmpty }
+
+    /// Length along the track in metres, not counting the gaps between segments.
+    var distance: Double {
+        drawableSegments.reduce(0) { total, segment in
+            zip(segment, segment.dropFirst()).reduce(total) { sum, pair in
+                sum + CLLocation(latitude: pair.0.latitude, longitude: pair.0.longitude)
+                    .distance(from: CLLocation(latitude: pair.1.latitude, longitude: pair.1.longitude))
+            }
+        }
+    }
+
+    /// Total climb in metres, or nil if the track has no elevations.
+    ///
+    /// GPS elevation wobbles by several metres, so a climb only counts once it's
+    /// risen `threshold` metres above the lowest point since the last counted climb.
+    func elevationGain(threshold: Double = 5) -> Double? {
+        var gain = 0.0
+        var sawElevation = false
+        for segment in drawableSegments {
+            var reference: Double?
+            for elevation in segment.compactMap(\.elevation) {
+                sawElevation = true
+                guard let low = reference else {
+                    reference = elevation
+                    continue
+                }
+                if elevation > low + threshold {
+                    gain += elevation - low
+                    reference = elevation
+                } else if elevation < low {
+                    reference = elevation
+                }
+            }
+        }
+        return sawElevation ? gain : nil
+    }
 }
 
 /// Builds a `Track` from location fixes during a ride.
@@ -80,7 +116,17 @@ enum Simplify {
     /// Douglas–Peucker: drops points that lie within `tolerance` metres of the line
     /// through their neighbours, keeping the shape (corners, curves) intact.
     static func coordinates(_ points: [CLLocationCoordinate2D], tolerance: Double) -> [CLLocationCoordinate2D] {
-        guard points.count > 2 else { return points }
+        indices(of: points, tolerance: tolerance).map { points[$0] }
+    }
+
+    /// The same, for track points: keeps each survivor's elevation and other fields.
+    static func points(_ points: [TrackPoint], tolerance: Double) -> [TrackPoint] {
+        indices(of: points.map(\.coordinate), tolerance: tolerance).map { points[$0] }
+    }
+
+    /// Indices of the points Douglas–Peucker keeps, in order; always the first and last.
+    static func indices(of points: [CLLocationCoordinate2D], tolerance: Double) -> [Int] {
+        guard points.count > 2 else { return Array(points.indices) }
 
         // Flat-earth projection around the first point: plenty accurate over a ride.
         let origin = points[0]
@@ -115,7 +161,7 @@ enum Simplify {
                 stack.append((farthest, last))
             }
         }
-        return points.indices.filter { keep[$0] }.map { points[$0] }
+        return points.indices.filter { keep[$0] }
     }
 
     private static func distance(from p: SIMD2<Double>, toSegment a: SIMD2<Double>, _ b: SIMD2<Double>) -> Double {

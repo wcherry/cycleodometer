@@ -6,9 +6,12 @@ struct RideDetailView: View {
     var ride: RideRecord
     var history: RideHistory
 
+    @Environment(RouteLibrary.self) private var library
     @AppStorage(UnitSystem.storageKey) private var units = UnitSystem.imperial
     @State private var track: Track?
     @State private var isLoading = true
+    @State private var naming = false
+    @State private var routeName = ""
 
     var body: some View {
         ScrollView {
@@ -33,6 +36,8 @@ struct RideDetailView: View {
                                    unit: units.speedLabel.lowercased())
                     }
                 }
+
+                saveAsRoute
             }
             .padding()
         }
@@ -42,6 +47,52 @@ struct RideDetailView: View {
             track = await history.loadTrack(for: ride)
             isLoading = false
         }
+        .alert("Save as Route", isPresented: $naming) {
+            TextField("Name", text: $routeName)
+            Button("Save") { save() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Routes are kept until you delete them, even after this ride leaves your history.")
+        }
+    }
+
+    /// Save as Route, or a link to the route once it's been saved.
+    @ViewBuilder
+    private var saveAsRoute: some View {
+        if let saved = library.route(fromRide: ride.id) {
+            NavigationLink(value: saved) {
+                Label("Saved as “\(saved.name)”", systemImage: "checkmark.circle.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+        } else {
+            Button {
+                routeName = defaultRouteName
+                naming = true
+            } label: {
+                Label("Save as Route", systemImage: "bookmark")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.green)
+            .controlSize(.large)
+            .disabled(track?.isEmpty ?? true)
+        }
+    }
+
+    /// e.g. "Sat, Sep 26, 11.5 mi".
+    private var defaultRouteName: String {
+        let date = ride.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        let distance = units.distance(ride.distance).formatted(.number.precision(.fractionLength(1)))
+        return "\(date), \(distance) \(units.distanceLabel)"
+    }
+
+    private func save() {
+        guard let track else { return }
+        let name = routeName.trimmingCharacters(in: .whitespacesAndNewlines)
+        library.add(name: name.isEmpty ? defaultRouteName : name, track: track,
+                    source: .ride(id: ride.id, date: ride.date))
     }
 
     @ViewBuilder
@@ -66,8 +117,8 @@ struct RideDetailView: View {
 }
 
 /// A finished track, framed to fit, with a green start dot and a chequered flag at
-/// the finish.
-private struct TrackMap: View {
+/// the finish. Used for rides and saved routes.
+struct TrackMap: View {
     var track: Track
 
     /// Simplified once: a long ride's full track is far more than the map needs.
@@ -118,7 +169,7 @@ private struct TrackMap: View {
     }
 }
 
-private struct DetailTile: View {
+struct DetailTile: View {
     var title: String
     var value: String
     var unit: String?

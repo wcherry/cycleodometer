@@ -26,6 +26,16 @@ targets:
         NSLocationWhenInUseUsageDescription: Your location is used to measure speed and distance while you ride.
         NSMotionUsageDescription: The barometer is used to measure the incline of the road.
         NSAppleMusicUsageDescription: Used to play and pause your music during a ride.
+        # Lets Open in Google Maps send 9 waypoints to the app instead of 3 to a browser.
+        LSApplicationQueriesSchemes: [comgooglemaps]
+        # GPX: what routes are shared as (and, from phase 3, imported from).
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.topografix.gpx
+            UTTypeDescription: GPS Exchange Format
+            UTTypeConformsTo: [public.xml]
+            UTTypeTagSpecification:
+              public.filename-extension: [gpx]
+              public.mime-type: [application/gpx+xml]
     scheme:
       testTargets:
         - CycleOdometerTests

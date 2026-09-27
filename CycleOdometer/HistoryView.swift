@@ -35,9 +35,19 @@ struct HistoryView: View {
             .navigationDestination(for: RideRecord.self) { ride in
                 RideDetailView(ride: ride, history: history)
             }
+            .navigationDestination(for: SavedRoute.self) { route in
+                RouteDetailView(route: route)
+            }
             .navigationTitle("Ride History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        RoutesView()
+                    } label: {
+                        Label("Routes", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }

@@ -43,6 +43,21 @@ enum UnitSystem: String, CaseIterable, Identifiable {
         }
     }
 
+    var elevationLabel: String {
+        switch self {
+        case .imperial: "ft"
+        case .metric: "m"
+        }
+    }
+
+    /// Converts metres of height to feet or metres.
+    func elevation(_ meters: Double) -> Double {
+        switch self {
+        case .imperial: meters * 3.280_84
+        case .metric: meters
+        }
+    }
+
     /// Converts metres to this system's distance unit.
     func distance(_ meters: Double) -> Double {
         switch self {

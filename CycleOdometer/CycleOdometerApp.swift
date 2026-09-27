@@ -4,6 +4,7 @@ import SwiftUI
 struct CycleOdometerApp: App {
     @State private var ride = RideTracker()
     @State private var history = RideHistory()
+    @State private var routes = RouteLibrary()
 
     var body: some Scene {
         WindowGroup {
@@ -15,6 +16,7 @@ struct CycleOdometerApp: App {
                 }
             }
             .environment(history)
+            .environment(routes)
             .preferredColorScheme(.dark)
             .animation(.easeInOut, value: ride.isActive)
             #if DEBUG
