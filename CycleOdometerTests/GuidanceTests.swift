@@ -59,6 +59,7 @@ private let routeTrack = Track(segments: [points([(0, 0), (300, 0), (300, 400)])
         let route = library.add(name: "Test", track: routeTrack, source: .imported)!
         let ride = RideTracker()
         ride.directions = fake
+        ride.liveActivity = nil
         return (ride, library, route)
     }
 

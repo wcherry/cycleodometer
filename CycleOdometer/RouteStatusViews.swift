@@ -125,44 +125,71 @@ struct RouteStatusCard: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var cue: Cue? {
-        switch status {
-        case .approaching(_, _, let cue), .onRoute(let cue), .offRoute(_, _, let cue): cue
-        case .backOnRoute, .finished: nil
-        }
+    private var text: RouteStatusText {
+        RouteStatusText(status: status, follower: follower, routeName: routeName, units: units)
     }
+
+    private var title: String { text.title }
+    private var detail: String { text.detail }
 
     @ViewBuilder
     private var icon: some View {
-        if let cue {
-            Image(systemName: cue.symbol)
-        } else {
-            statusIcon
-        }
-    }
-
-    @ViewBuilder
-    private var statusIcon: some View {
         switch status {
-        case .approaching(_, let bearing, _), .offRoute(_, let bearing, _):
+        case .approaching(_, let bearing, nil), .offRoute(_, let bearing, nil):
             // Relative to where the phone faces, when we know; otherwise just a warning.
             if let bearing, let heading {
                 Image(systemName: "location.north.fill")
                     .rotationEffect(.degrees(bearing - heading))
                     .accessibilityLabel("Arrow towards the route")
             } else {
-                Image(systemName: "exclamationmark.triangle.fill")
+                Image(systemName: text.symbol)
             }
-        case .onRoute:
-            Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
-        case .backOnRoute:
-            Image(systemName: "checkmark.circle.fill")
-        case .finished:
-            Image(systemName: "flag.checkered")
+        default:
+            Image(systemName: text.symbol)
         }
     }
 
-    private var title: String {
+    private var tint: Color {
+        switch status {
+        case .offRoute: .orange
+        case .backOnRoute, .finished: .green
+        case .approaching: .cyan
+        case .onRoute: .primary
+        }
+    }
+}
+
+/// The words for a route status, shared by the card and the Live Activity so they
+/// always say the same thing.
+struct RouteStatusText {
+    var status: RouteStatus
+    var follower: RouteFollower
+    var routeName: String
+    var units: UnitSystem
+
+    var cue: Cue? {
+        switch status {
+        case .approaching(_, _, let cue), .onRoute(let cue), .offRoute(_, _, let cue): cue
+        case .backOnRoute, .finished: nil
+        }
+    }
+
+    var isWarning: Bool {
+        if case .offRoute = status { true } else { false }
+    }
+
+    /// A fixed icon; the card swaps in a live arrow back to the route when it can.
+    var symbol: String {
+        if let cue { return cue.symbol }
+        switch status {
+        case .approaching, .offRoute: return "exclamationmark.triangle.fill"
+        case .onRoute: return "point.topleft.down.to.point.bottomright.curvepath"
+        case .backOnRoute: return "checkmark.circle.fill"
+        case .finished: return "flag.checkered"
+        }
+    }
+
+    var title: String {
         if let cue {
             // A turn reads "Right in 400 ft"; Apple's steps are already sentences.
             if case .turn = cue.kind { return "\(cue.instruction) in \(units.shortDistance(cue.distance))" }
@@ -178,7 +205,7 @@ struct RouteStatusCard: View {
         }
     }
 
-    private var detail: String {
+    var detail: String {
         if let cue {
             switch cue.kind {
             case .turn:
@@ -193,15 +220,6 @@ struct RouteStatusCard: View {
         case .approaching: return routeName
         case .finished: return "\(routeName) · \(units.distance(follower.length).formatted(.number.precision(.fractionLength(1)))) \(units.distanceLabel)"
         default: return units.progress(follower)
-        }
-    }
-
-    private var tint: Color {
-        switch status {
-        case .offRoute: .orange
-        case .backOnRoute, .finished: .green
-        case .approaching: .cyan
-        case .onRoute: .primary
         }
     }
 }

@@ -47,6 +47,8 @@
 	<string>Your location is used to measure speed and distance while you ride.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>The barometer is used to measure the incline of the road.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

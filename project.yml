@@ -4,6 +4,16 @@ options:
   deploymentTarget:
     iOS: "26.0"
 
+# Shared by the app and its widget extension, whose versions must match for App Store
+# Connect. scripts/deploy_testflight.sh bumps them here.
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: "46KWJJ63FU"
+    CODE_SIGN_STYLE: Automatic
+
 targets:
   CycleOdometer:
     type: application
@@ -35,6 +45,8 @@ targets:
             LSHandlerRank: Alternate
             LSItemContentTypes: [com.topografix.gpx]
         LSSupportsOpeningDocumentsInPlace: false
+        # The ride on the Lock Screen and in the Dynamic Island (CycleOdometerWidgets).
+        NSSupportsLiveActivities: true
         UTImportedTypeDeclarations:
           - UTTypeIdentifier: com.topografix.gpx
             UTTypeDescription: GPS Exchange Format
@@ -42,19 +54,36 @@ targets:
             UTTypeTagSpecification:
               public.filename-extension: [gpx]
               public.mime-type: [application/gpx+xml]
+    dependencies:
+      - target: CycleOdometerWidgets
     scheme:
       testTargets:
         - CycleOdometerTests
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.williamcherry.cycleodometer
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
-        SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1"
-        DEVELOPMENT_TEAM: "46KWJJ63FU"
-        CODE_SIGN_STYLE: Automatic
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  CycleOdometerWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: CycleOdometerWidgets
+      # The Live Activity's data, shared with the app.
+      - path: CycleOdometer/RideActivityAttributes.swift
+    info:
+      path: CycleOdometerWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Cycle
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.williamcherry.cycleodometer.widgets
+        TARGETED_DEVICE_FAMILY: "1"
 
   CycleOdometerTests:
     type: bundle.unit-test
@@ -67,6 +96,3 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.williamcherry.cycleodometer.tests
         GENERATE_INFOPLIST_FILE: YES
-        SWIFT_VERSION: "5.0"
-        DEVELOPMENT_TEAM: "46KWJJ63FU"
-        CODE_SIGN_STYLE: Automatic

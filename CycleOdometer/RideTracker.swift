@@ -45,6 +45,8 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     private(set) var routeBack: GuidanceLeg?
     /// Where Apple's directions come from; tests substitute canned answers.
     @ObservationIgnored var directions: DirectionsProvider = MapKitDirections()
+    /// The Dynamic Island / Lock Screen view of the ride; nil in tests.
+    @ObservationIgnored var liveActivity: RideLiveActivity? = RideLiveActivity()
 
     private var accumulated: TimeInterval = 0
     @ObservationIgnored private var startDate = Date.now
@@ -154,12 +156,18 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         }
         UIApplication.shared.isIdleTimerDisabled = true
         resume()
+        let snapshot = liveActivitySnapshot()
+        liveActivity?.start(snapshot.state, key: snapshot.key)
     }
 
     /// Stops tracking and returns the finished ride's summary and its track.
     @discardableResult
     func end() -> (record: RideRecord, track: Track) {
         pause()
+        var summary = liveActivitySnapshot().state
+        summary.route = nil
+        summary.isFinished = true
+        liveActivity?.end(summary)
         manager.stopUpdatingLocation()
         manager.stopUpdatingHeading()
         altimeter.stopRelativeAltitudeUpdates()
@@ -182,6 +190,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
 
     func toggleTimer() {
         isRunning ? pause() : resume()
+        updateLiveActivity()
     }
 
     private func resume() {
@@ -204,6 +213,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     // MARK: CLLocationManagerDelegate
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        defer { updateLiveActivity() }
         for location in locations {
             // Ignore stale or inaccurate fixes; they produce phantom distance and speed spikes.
             guard location.horizontalAccuracy >= 0,
@@ -231,6 +241,42 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
                 updateGuidance(at: location, on: follower)
             }
         }
+    }
+
+    // MARK: Live Activity
+
+    /// What the Live Activity should show now, and a key summarising what about it is
+    /// urgent (pausing, the next turn and how close it is, going off route): when the
+    /// key changes, the update goes out straight away.
+    func liveActivitySnapshot() -> (state: RideActivityAttributes.ContentState, key: String) {
+        let units = UnitSystem.current
+        var key = "running:\(isRunning)"
+        var line: RideActivityAttributes.RouteLine?
+        if let follower {
+            let cue = currentCue
+            let text = RouteStatusText(status: RouteStatus(follower: follower, recentlyRejoined: false, cue: cue),
+                                       follower: follower, routeName: route?.name ?? "Route", units: units)
+            line = .init(symbol: text.symbol, title: text.title, detail: text.detail, isWarning: text.isWarning)
+            key += "|cue:\(cue.map { "\($0.kind)/\($0.stage)" } ?? "-")|off:\(follower.isOffRoute)"
+                + "|joined:\(follower.hasJoined)|done:\(follower.isFinished)"
+        }
+        let state = RideActivityAttributes.ContentState(
+            // Rounded as displayed, so noise in the last digits doesn't count as a change.
+            speed: (units.speed(speed) * 10).rounded() / 10,
+            speedUnit: units.speedLabel.lowercased(),
+            distance: (units.distance(distance) * 100).rounded() / 100,
+            distanceUnit: units.distanceLabel,
+            elapsed: elapsed(),
+            timerStart: runningSince.map { $0 - accumulated },
+            route: line
+        )
+        return (state, key)
+    }
+
+    private func updateLiveActivity() {
+        guard isActive, let liveActivity else { return }
+        let snapshot = liveActivitySnapshot()
+        liveActivity.update(snapshot.state, key: snapshot.key)
     }
 
     // MARK: Route guidance

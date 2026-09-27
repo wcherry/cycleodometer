@@ -10,9 +10,11 @@
 		0247DA926872D77EE6213E40 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BA92FC527EB4ED57F778CF /* Settings.swift */; };
 		0375B581844B778324D6C72D /* RideHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BE9DB60B0CDD581339830D /* RideHistory.swift */; };
 		0FCFF98D51EBF10F932AAC54 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9D8DA170CD07919B455B0B7B /* Assets.xcassets */; };
+		1473FF6831509CB88842D449 /* RideActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB9F0028CC45BE2A2C4C13FB /* RideActivityAttributes.swift */; };
 		23531056D00EF8A850320903 /* DirectionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF8F6FC0540D2B42CD6B091 /* DirectionsTests.swift */; };
 		343AA9999548682B568F93BE /* Polyline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B7A8BFB3F932F7A9A79CDB /* Polyline.swift */; };
 		467E4FC59F59A84A868F4DFD /* RouteStatusViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E6B236766B0585E0E22204 /* RouteStatusViews.swift */; };
+		4CAC01801BBCC29645D3851E /* CycleOdometerWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F1547A729DBEE3FBF4F62681 /* CycleOdometerWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		501D6285CAE1B0601F542862 /* Directions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B762E4F3D366FE3215278B /* Directions.swift */; };
 		521EFFC7BE299BCB7F82AF54 /* CycleOdometerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6984A3A568C118ABFFE619 /* CycleOdometerApp.swift */; };
 		58CF4590BDBECDCEAF7AEA44 /* Controls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457B2E3E91831E600DC4BDBA /* Controls.swift */; };
@@ -25,16 +27,20 @@
 		A72F16F97E442329E21886BF /* CompassView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54152D4D1ED844C5541B7451 /* CompassView.swift */; };
 		A756B129FCEA56A814D03BB7 /* Turns.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6029DF1AE8F5A0B9268ADFE /* Turns.swift */; };
 		AD2D7EE9C15655DFC6FFD318 /* SpeedGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464D23EB5E279AB2D5AF22ED /* SpeedGauge.swift */; };
+		BDC6551CF5AAC6514332A3A5 /* RideActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB9F0028CC45BE2A2C4C13FB /* RideActivityAttributes.swift */; };
 		C37CFE47F5700FAD59E4D4B3 /* RideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497C1DC7D94EE20F3DEDBA48 /* RideView.swift */; };
+		C9FA60B87E3DEE105310A480 /* RideLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39FE057B4EA78C47E6F8B12E /* RideLiveActivityWidget.swift */; };
 		D12DFBB317B084188699FEE0 /* RouteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D29B119956A2712C5DF514A /* RouteTests.swift */; };
 		D8EF84B668D6CCEDACB5E169 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85F4BD553DBAED49E898E413 /* Track.swift */; };
 		DB20FED49DB489DE11C0E945 /* GPX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5787AC9831CAF961B83D90CC /* GPX.swift */; };
+		E68CE66E264AE7EEE8115241 /* RideLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA0473D76C8B26AA9E48F3F /* RideLiveActivity.swift */; };
 		E77BDC7A2EEB7E3F3759600E /* RideTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A3E2D50CBA48E4BBA06195 /* RideTracker.swift */; };
 		EB7A3AF153D5D102B8D2320C /* RoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B88B5DDB963FCBC216F1043 /* RoutesView.swift */; };
 		EE9058EB83E5510AEE3808C4 /* RouteStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672A02117726305D81F47669 /* RouteStartView.swift */; };
 		EEE2F7C78FB7EA354F022063 /* RideDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049AAEF37FF0C4BD045ACC79 /* RideDetailView.swift */; };
 		F56BD8C036BA855CDCAFDBFC /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AC8FCAD7884F6552783A88 /* HistoryView.swift */; };
 		F659365425A4B571905F74BC /* GuidanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26EC712F67A37A9CB855C74C /* GuidanceTests.swift */; };
+		F764B71E6F6FFBDDDF065B92 /* LiveActivityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E81E111202CB835D178D3F /* LiveActivityTests.swift */; };
 		FFFFB4FF77ACAD3163C8E2BE /* TrackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AECE31705D7D14CDC2CA2D /* TrackTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -46,16 +52,39 @@
 			remoteGlobalIDString = D63C64DA4C8A59A1CE01C60B;
 			remoteInfo = CycleOdometer;
 		};
+		D0D207FED0E6547ECF6FA8EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1C2C247B77C8C7C86704A567 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7531F77218E212136EC9AB9F;
+			remoteInfo = CycleOdometerWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		98CF9315DD1CFC44F760283A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4CAC01801BBCC29645D3851E /* CycleOdometerWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		049AAEF37FF0C4BD045ACC79 /* RideDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideDetailView.swift; sourceTree = "<group>"; };
 		0E749617E34C6C73E81CD1DB /* RouteFollowerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteFollowerTests.swift; sourceTree = "<group>"; };
 		0F5FE8991650D9B57E931A04 /* RideMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMapView.swift; sourceTree = "<group>"; };
+		1DA0473D76C8B26AA9E48F3F /* RideLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideLiveActivity.swift; sourceTree = "<group>"; };
 		26EC712F67A37A9CB855C74C /* GuidanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidanceTests.swift; sourceTree = "<group>"; };
 		29B7A8BFB3F932F7A9A79CDB /* Polyline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Polyline.swift; sourceTree = "<group>"; };
 		2BF8F6FC0540D2B42CD6B091 /* DirectionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectionsTests.swift; sourceTree = "<group>"; };
 		2D29B119956A2712C5DF514A /* RouteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteTests.swift; sourceTree = "<group>"; };
+		39FE057B4EA78C47E6F8B12E /* RideLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideLiveActivityWidget.swift; sourceTree = "<group>"; };
 		41604346E7095385EFA5AEE0 /* TurnTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnTests.swift; sourceTree = "<group>"; };
 		4434F4FB2789CC9313EF20BC /* RouteFollower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteFollower.swift; sourceTree = "<group>"; };
 		457B2E3E91831E600DC4BDBA /* Controls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controls.swift; sourceTree = "<group>"; };
@@ -65,8 +94,10 @@
 		4AFDDA9D394AF824CA68728A /* StartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartView.swift; sourceTree = "<group>"; };
 		54152D4D1ED844C5541B7451 /* CompassView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassView.swift; sourceTree = "<group>"; };
 		5787AC9831CAF961B83D90CC /* GPX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPX.swift; sourceTree = "<group>"; };
+		5F689B0548650E5562BA8EB9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		672A02117726305D81F47669 /* RouteStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteStartView.swift; sourceTree = "<group>"; };
 		6B88B5DDB963FCBC216F1043 /* RoutesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesView.swift; sourceTree = "<group>"; };
+		74E81E111202CB835D178D3F /* LiveActivityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityTests.swift; sourceTree = "<group>"; };
 		7F6984A3A568C118ABFFE619 /* CycleOdometerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleOdometerApp.swift; sourceTree = "<group>"; };
 		85F4BD553DBAED49E898E413 /* Track.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
 		89AC8FCAD7884F6552783A88 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
@@ -74,6 +105,8 @@
 		9D8DA170CD07919B455B0B7B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B6BE9DB60B0CDD581339830D /* RideHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideHistory.swift; sourceTree = "<group>"; };
 		D9B7A0719302AEC84EA8DBC7 /* CycleOdometer.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CycleOdometer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB9F0028CC45BE2A2C4C13FB /* RideActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideActivityAttributes.swift; sourceTree = "<group>"; };
+		F1547A729DBEE3FBF4F62681 /* CycleOdometerWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = CycleOdometerWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F217176C097D574473357DFC /* CycleOdometerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CycleOdometerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4520F305083BAED0B38B55B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F6029DF1AE8F5A0B9268ADFE /* Turns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Turns.swift; sourceTree = "<group>"; };
@@ -89,6 +122,7 @@
 			children = (
 				2BF8F6FC0540D2B42CD6B091 /* DirectionsTests.swift */,
 				26EC712F67A37A9CB855C74C /* GuidanceTests.swift */,
+				74E81E111202CB835D178D3F /* LiveActivityTests.swift */,
 				0E749617E34C6C73E81CD1DB /* RouteFollowerTests.swift */,
 				2D29B119956A2712C5DF514A /* RouteTests.swift */,
 				F7AECE31705D7D14CDC2CA2D /* TrackTests.swift */,
@@ -102,6 +136,7 @@
 			children = (
 				7F78ACC4EBF7F57E071D2C01 /* CycleOdometer */,
 				02B4863A691959A0A9D34589 /* CycleOdometerTests */,
+				93DD54EFE00F49DEFFC87D82 /* CycleOdometerWidgets */,
 				561CF02F3E33D74DC959E28D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -111,6 +146,7 @@
 			children = (
 				D9B7A0719302AEC84EA8DBC7 /* CycleOdometer.app */,
 				F217176C097D574473357DFC /* CycleOdometerTests.xctest */,
+				F1547A729DBEE3FBF4F62681 /* CycleOdometerWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -127,8 +163,10 @@
 				89AC8FCAD7884F6552783A88 /* HistoryView.swift */,
 				F4520F305083BAED0B38B55B /* Info.plist */,
 				29B7A8BFB3F932F7A9A79CDB /* Polyline.swift */,
+				EB9F0028CC45BE2A2C4C13FB /* RideActivityAttributes.swift */,
 				049AAEF37FF0C4BD045ACC79 /* RideDetailView.swift */,
 				B6BE9DB60B0CDD581339830D /* RideHistory.swift */,
+				1DA0473D76C8B26AA9E48F3F /* RideLiveActivity.swift */,
 				0F5FE8991650D9B57E931A04 /* RideMapView.swift */,
 				F8A3E2D50CBA48E4BBA06195 /* RideTracker.swift */,
 				497C1DC7D94EE20F3DEDBA48 /* RideView.swift */,
@@ -144,6 +182,15 @@
 				F6029DF1AE8F5A0B9268ADFE /* Turns.swift */,
 			);
 			path = CycleOdometer;
+			sourceTree = "<group>";
+		};
+		93DD54EFE00F49DEFFC87D82 /* CycleOdometerWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				5F689B0548650E5562BA8EB9 /* Info.plist */,
+				39FE057B4EA78C47E6F8B12E /* RideLiveActivityWidget.swift */,
+			);
+			path = CycleOdometerWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -167,16 +214,35 @@
 			productReference = F217176C097D574473357DFC /* CycleOdometerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		7531F77218E212136EC9AB9F /* CycleOdometerWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E7EC7C11561FE86599C0A118 /* Build configuration list for PBXNativeTarget "CycleOdometerWidgets" */;
+			buildPhases = (
+				5B645ECEE6FD9D525B55BADC /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CycleOdometerWidgets;
+			packageProductDependencies = (
+			);
+			productName = CycleOdometerWidgets;
+			productReference = F1547A729DBEE3FBF4F62681 /* CycleOdometerWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		D63C64DA4C8A59A1CE01C60B /* CycleOdometer */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 02623733093277513453864F /* Build configuration list for PBXNativeTarget "CycleOdometer" */;
 			buildPhases = (
 				0FC75F4A101B8DF80EEA561B /* Sources */,
 				0D926B6BE0899DF443798DC8 /* Resources */,
+				98CF9315DD1CFC44F760283A /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				80693EC4DE17A1C513C69C9C /* PBXTargetDependency */,
 			);
 			name = CycleOdometer;
 			packageProductDependencies = (
@@ -195,6 +261,10 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					55D89CC0F8192D107D5C791C = {
+						DevelopmentTeam = 46KWJJ63FU;
+						ProvisioningStyle = Automatic;
+					};
+					7531F77218E212136EC9AB9F = {
 						DevelopmentTeam = 46KWJJ63FU;
 						ProvisioningStyle = Automatic;
 					};
@@ -220,6 +290,7 @@
 			targets = (
 				D63C64DA4C8A59A1CE01C60B /* CycleOdometer */,
 				55D89CC0F8192D107D5C791C /* CycleOdometerTests */,
+				7531F77218E212136EC9AB9F /* CycleOdometerWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -247,8 +318,10 @@
 				DB20FED49DB489DE11C0E945 /* GPX.swift in Sources */,
 				F56BD8C036BA855CDCAFDBFC /* HistoryView.swift in Sources */,
 				343AA9999548682B568F93BE /* Polyline.swift in Sources */,
+				BDC6551CF5AAC6514332A3A5 /* RideActivityAttributes.swift in Sources */,
 				EEE2F7C78FB7EA354F022063 /* RideDetailView.swift in Sources */,
 				0375B581844B778324D6C72D /* RideHistory.swift in Sources */,
+				E68CE66E264AE7EEE8115241 /* RideLiveActivity.swift in Sources */,
 				A10B0DF16D634E722B688E4F /* RideMapView.swift in Sources */,
 				E77BDC7A2EEB7E3F3759600E /* RideTracker.swift in Sources */,
 				C37CFE47F5700FAD59E4D4B3 /* RideView.swift in Sources */,
@@ -265,12 +338,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5B645ECEE6FD9D525B55BADC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1473FF6831509CB88842D449 /* RideActivityAttributes.swift in Sources */,
+				C9FA60B87E3DEE105310A480 /* RideLiveActivityWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DBAA188469F650CDAB73D270 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				23531056D00EF8A850320903 /* DirectionsTests.swift in Sources */,
 				F659365425A4B571905F74BC /* GuidanceTests.swift in Sources */,
+				F764B71E6F6FFBDDDF065B92 /* LiveActivityTests.swift in Sources */,
 				7FFE4A8976F05D18700883DC /* RouteFollowerTests.swift in Sources */,
 				D12DFBB317B084188699FEE0 /* RouteTests.swift in Sources */,
 				FFFFB4FF77ACAD3163C8E2BE /* TrackTests.swift in Sources */,
@@ -281,6 +364,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		80693EC4DE17A1C513C69C9C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7531F77218E212136EC9AB9F /* CycleOdometerWidgets */;
+			targetProxy = D0D207FED0E6547ECF6FA8EE /* PBXContainerItemProxy */;
+		};
 		8B2B3811D6B81B106299BCEA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = D63C64DA4C8A59A1CE01C60B /* CycleOdometer */;
@@ -293,8 +381,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 46KWJJ63FU;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -303,7 +389,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.williamcherry.cycleodometer.tests;
 				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CycleOdometer.app/CycleOdometer";
 			};
@@ -342,8 +427,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 46KWJJ63FU;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -355,6 +443,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -370,18 +459,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 46KWJJ63FU;
 				INFOPLIST_FILE = CycleOdometer/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.williamcherry.cycleodometer;
 				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
@@ -390,8 +474,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 46KWJJ63FU;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -400,7 +482,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.williamcherry.cycleodometer.tests;
 				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CycleOdometer.app/CycleOdometer";
 			};
@@ -439,8 +520,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 46KWJJ63FU;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -458,6 +542,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -474,21 +559,46 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 46KWJJ63FU;
 				INFOPLIST_FILE = CycleOdometer/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.williamcherry.cycleodometer;
 				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
+		};
+		8E625FF8FB95B39FA3D796A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = CycleOdometerWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.williamcherry.cycleodometer.widgets;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A8A7FCFB58AFBC09F78AD4A0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = CycleOdometerWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.williamcherry.cycleodometer.widgets;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
@@ -516,6 +626,15 @@
 			buildConfigurations = (
 				658299DA8FECF66BBB308CAB /* Debug */,
 				223FB993F769F68B955C810B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E7EC7C11561FE86599C0A118 /* Build configuration list for PBXNativeTarget "CycleOdometerWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8E625FF8FB95B39FA3D796A8 /* Debug */,
+				A8A7FCFB58AFBC09F78AD4A0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

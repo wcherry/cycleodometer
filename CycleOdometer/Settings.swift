@@ -5,6 +5,11 @@ enum UnitSystem: String, CaseIterable, Identifiable {
 
     static let storageKey = "unitSystem"
 
+    /// The rider's choice, for code outside views (views use @AppStorage).
+    static var current: UnitSystem {
+        UserDefaults.standard.string(forKey: storageKey).flatMap(UnitSystem.init(rawValue:)) ?? .imperial
+    }
+
     var id: Self { self }
 
     var title: String {
