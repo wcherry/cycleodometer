@@ -28,9 +28,14 @@ struct RideMapView: View {
                     MapPolyline(coordinates: done)
                         .stroke(Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
                 }
+                // Navigating: the destination, by name.
+                if let destination = ride.navigation?.destination {
+                    Marker(destination.name, systemImage: "mappin", coordinate: destination.coordinate)
+                        .tint(.red)
+                }
                 // A small flag rather than a balloon, so it doesn't cover you. Left off
                 // loops, where the finish is the start.
-                if let start = follower.coordinates.first, let finish = follower.coordinates.last,
+                else if let start = follower.coordinates.first, let finish = follower.coordinates.last,
                    CLLocation(latitude: start.latitude, longitude: start.longitude)
                        .distance(from: CLLocation(latitude: finish.latitude, longitude: finish.longitude)) > 50 {
                     Annotation("Finish", coordinate: finish) {
@@ -66,8 +71,8 @@ struct RideMapView: View {
                 topBar
                 // Progress is in the stats strip; the card is for everything else.
                 if let follower = ride.follower, let routeStatus, !routeStatus.isQuiet {
-                    RouteStatusCard(status: routeStatus, follower: follower,
-                                    routeName: ride.route?.name ?? "Route", heading: ride.heading, onMap: true)
+                    RouteStatusCard(status: routeStatus, follower: follower, routeName: ride.routeName,
+                                    navigation: ride.navigation, heading: ride.heading, onMap: true)
                         .padding(.horizontal)
                 }
             }
@@ -115,7 +120,10 @@ struct RideMapView: View {
         VStack(spacing: 6) {
             stats
             if let follower = ride.follower, follower.hasJoined {
-                Text(units.progress(follower))
+                Text(ride.navigation.map {
+                    "\(units.distance(follower.remaining).formatted(.number.precision(.fractionLength(1)))) \(units.distanceLabel) · "
+                        + Navigation.timeLeftText($0.timeLeft(remaining: follower.remaining))
+                } ?? units.progress(follower))
                     .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)

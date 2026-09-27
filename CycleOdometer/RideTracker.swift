@@ -39,6 +39,14 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     private(set) var follower: RouteFollower?
     /// The route's turns, with street names as they're found.
     private(set) var turns: [Turn] = []
+    /// Navigating to a place (instead of following a saved route): the destination
+    /// and Apple's instructions. `follower` follows Apple's route to it.
+    private(set) var navigation: Navigation?
+
+    /// What the ride is heading along: the route's name, or where it's navigating to.
+    var routeName: String {
+        route?.name ?? navigation?.destination.name ?? "Route"
+    }
     /// Apple's directions to the route's start (Ride to Start), until you reach it.
     private(set) var approach: GuidanceLeg?
     /// Apple's directions back onto the route after a minute off it.
@@ -112,6 +120,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
                library: RouteLibrary? = nil, rideToStart: Bool = false) {
         self.route = route
         self.library = library
+        navigation = nil
         follower = track.flatMap(RouteFollower.init(track:))
         turns = follower.map { TurnDetector.turns(in: $0.line) } ?? []
         approach = nil
@@ -179,6 +188,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         route = nil
         follower = nil
         turns = []
+        navigation = nil
         approach = nil
         routeBack = nil
         manager.allowsBackgroundLocationUpdates = false
@@ -255,7 +265,7 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         if let follower {
             let cue = currentCue
             let text = RouteStatusText(status: RouteStatus(follower: follower, recentlyRejoined: false, cue: cue),
-                                       follower: follower, routeName: route?.name ?? "Route", units: units)
+                                       follower: follower, routeName: routeName, units: units, navigation: navigation)
             line = .init(symbol: text.symbol, title: text.title, detail: text.detail, isWarning: text.isWarning)
             key += "|cue:\(cue.map { "\($0.kind)/\($0.stage)" } ?? "-")|off:\(follower.isOffRoute)"
                 + "|joined:\(follower.hasJoined)|done:\(follower.isFinished)"
@@ -281,10 +291,31 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
 
     // MARK: Route guidance
 
-    /// The next thing to tell the rider: a turn on the route, or a step of the
-    /// directions to its start or back onto it.
+    /// Starts a ride navigating to `destination` along one of Apple's routes to it.
+    /// Going off route plans a new one from wherever you are.
+    func startNavigation(to destination: Destination, along directions: DirectionsRoute) {
+        start()
+        guard let line = Polyline(directions.coordinates) else { return }
+        follower = RouteFollower(track: Self.track(line.coordinates))
+        navigation = Navigation(destination: destination, route: directions, line: line)
+        updateLiveActivity()
+    }
+
+    private static func track(_ coordinates: [CLLocationCoordinate2D]) -> Track {
+        Track(segments: [coordinates.map { TrackPoint(latitude: $0.latitude, longitude: $0.longitude) }])
+    }
+
+    /// The next thing to tell the rider: a turn on the route, a step of Apple's
+    /// directions to a destination, or of the directions to a route's start or back onto it.
     var currentCue: Cue? {
         guard let follower else { return nil }
+        if let navigation {
+            guard follower.hasJoined, !follower.isOffRoute, !follower.isFinished,
+                  let index = navigation.steps.firstIndex(where: { $0.along > follower.progress + 5 }) else { return nil }
+            let step = navigation.steps[index]
+            return Cue(kind: .step(index), symbol: DirectionText.symbol(for: step.instructions),
+                       instruction: step.instructions, distance: step.along - follower.progress)
+        }
         if !follower.hasJoined, let step = approach?.nextStep {
             return Cue(kind: .leg(.toStart, step: step.index), symbol: DirectionText.symbol(for: step.instructions),
                        instruction: step.instructions, distance: step.distance)
@@ -302,6 +333,14 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
 
     private func updateGuidance(at location: CLLocation, on follower: RouteFollower) {
         let position = location.coordinate, time = location.timestamp
+
+        // Navigating: off route means a new route from here, not directions back.
+        if let navigation {
+            if follower.isOffRoute {
+                requestReroute(from: position, to: navigation.destination)
+            }
+            return
+        }
 
         // Riding to the start: directions until the route is reached.
         if follower.hasJoined {
@@ -327,6 +366,25 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
                 let rejoin = follower.line.coordinate(follower.line.point(at: follower.progress + Self.rejoinAhead))
                 requestLeg(.backToRoute, from: position, to: rejoin)
             }
+        }
+    }
+
+    /// Plans a new route to the destination from `position`. Offline, nothing
+    /// changes: the card keeps pointing back to the old route.
+    private func requestReroute(from position: CLLocationCoordinate2D, to destination: Destination) {
+        guard legRequest == nil,
+              lastLegRequest.map({ Date.now.timeIntervalSince($0) >= Self.legRequestInterval }) ?? true else { return }
+        lastLegRequest = .now
+        let provider = directions
+        legRequest = Task { @MainActor [weak self] in
+            let route = try? await provider.cyclingRoute(from: position, to: destination.coordinate)
+            guard let self, !Task.isCancelled else { return }
+            self.legRequest = nil
+            guard let route, self.follower?.isOffRoute == true, self.navigation != nil,
+                  let line = Polyline(route.coordinates) else { return }
+            self.follower = RouteFollower(track: Self.track(line.coordinates))
+            self.navigation = Navigation(destination: destination, route: route, line: line)
+            self.updateLiveActivity()
         }
     }
 

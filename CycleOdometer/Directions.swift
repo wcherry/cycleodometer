@@ -15,30 +15,54 @@ struct DirectionsStep: Equatable {
 struct DirectionsRoute {
     var coordinates: [CLLocationCoordinate2D]
     var steps: [DirectionsStep]
+    /// Apple's estimate, in metres and seconds.
+    var distance: Double = 0
+    var expectedTravelTime: TimeInterval = 0
+    /// Apple's name for the route, usually its main road ("Stevens Creek Blvd").
+    var name: String = ""
 }
 
 /// Apple's cycling directions and street lookups. A protocol so tests can stand in
 /// canned answers for the network.
 protocol DirectionsProvider {
-    func cyclingRoute(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async throws -> DirectionsRoute
+    /// Apple's cycling routes, best first; more than one when `alternatives` is set
+    /// and Apple has them.
+    func cyclingRoutes(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D,
+                       alternatives: Bool) async throws -> [DirectionsRoute]
     /// The street at a point, e.g. "Main St".
     func streetName(near: CLLocationCoordinate2D) async throws -> String?
+}
+
+extension DirectionsProvider {
+    func cyclingRoute(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async throws -> DirectionsRoute {
+        guard let route = try await cyclingRoutes(from: from, to: to, alternatives: false).first else {
+            throw MapKitDirections.NoRoute()
+        }
+        return route
+    }
 }
 
 struct MapKitDirections: DirectionsProvider {
     struct NoRoute: Error {}
 
-    func cyclingRoute(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async throws -> DirectionsRoute {
+    func cyclingRoutes(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D,
+                       alternatives: Bool) async throws -> [DirectionsRoute] {
         let request = MKDirections.Request()
         request.source = MKMapItem(location: CLLocation(latitude: from.latitude, longitude: from.longitude), address: nil)
         request.destination = MKMapItem(location: CLLocation(latitude: to.latitude, longitude: to.longitude), address: nil)
         request.transportType = .cycling
+        request.requestsAlternateRoutes = alternatives
         let response = try await MKDirections(request: request).calculate()
-        guard let route = response.routes.first else { throw NoRoute() }
-        return DirectionsRoute(
-            coordinates: route.polyline.coordinates,
-            steps: route.steps.map { DirectionsStep(instructions: $0.instructions, coordinates: $0.polyline.coordinates) }
-        )
+        guard !response.routes.isEmpty else { throw NoRoute() }
+        return response.routes.map { route in
+            DirectionsRoute(
+                coordinates: route.polyline.coordinates,
+                steps: route.steps.map { DirectionsStep(instructions: $0.instructions, coordinates: $0.polyline.coordinates) },
+                distance: route.distance,
+                expectedTravelTime: route.expectedTravelTime,
+                name: route.name
+            )
+        }
     }
 
     func streetName(near coordinate: CLLocationCoordinate2D) async throws -> String? {
@@ -146,8 +170,13 @@ struct GuidanceLeg {
         guard let line = Polyline(route.coordinates) else { return nil }
         self.purpose = purpose
         self.line = line
-        // The first step is Apple's "start" and has no manoeuvre.
-        steps = route.steps.dropFirst().compactMap { step in
+        steps = Self.steps(of: route, on: line)
+    }
+
+    /// Where each of Apple's instructions applies along `line`. The first step is
+    /// Apple's "start" and has no manoeuvre, so it's left out.
+    static func steps(of route: DirectionsRoute, on line: Polyline) -> [(along: Double, instructions: String)] {
+        route.steps.dropFirst().compactMap { step in
             guard let first = step.coordinates.first, !step.instructions.isEmpty else { return nil }
             return (line.nearest(to: first).along, step.instructions)
         }

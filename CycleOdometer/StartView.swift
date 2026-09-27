@@ -6,6 +6,7 @@ struct StartView: View {
 
     @State private var showingHistory = false
     @State private var pickingRoute = false
+    @State private var navigating = false
 
     var body: some View {
         ZStack {
@@ -33,6 +34,9 @@ struct StartView: View {
                 bottomButton("Ride a Route", systemImage: "point.topleft.down.to.point.bottomright.curvepath") {
                     pickingRoute = true
                 }
+                bottomButton("Navigate To…", systemImage: "arrow.triangle.turn.up.right.diamond") {
+                    navigating = true
+                }
                 bottomButton("Ride History", systemImage: "clock.arrow.circlepath") {
                     showingHistory = true
                 }
@@ -41,6 +45,9 @@ struct StartView: View {
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView(history: history)
+        }
+        .sheet(isPresented: $navigating) {
+            NavigateView()
         }
         .sheet(isPresented: $pickingRoute) {
             NavigationStack {

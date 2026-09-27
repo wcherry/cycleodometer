@@ -4,7 +4,10 @@ import SwiftUI
 /// directions to the route's start or back onto it.
 struct Cue: Equatable {
     enum Kind: Equatable {
+        /// A turn found in a saved route's shape.
         case turn(Int)
+        /// A step of Apple's directions to a destination.
+        case step(Int)
         case leg(GuidanceLeg.Purpose, step: Int)
     }
 
@@ -88,6 +91,8 @@ struct RouteStatusCard: View {
     var status: RouteStatus
     var follower: RouteFollower
     var routeName: String
+    /// Set when navigating to a place rather than following a saved route.
+    var navigation: Navigation? = nil
     /// The phone's heading, to point the arrow back to the route relative to you.
     var heading: Double?
     var onMap = false
@@ -126,7 +131,7 @@ struct RouteStatusCard: View {
     }
 
     private var text: RouteStatusText {
-        RouteStatusText(status: status, follower: follower, routeName: routeName, units: units)
+        RouteStatusText(status: status, follower: follower, routeName: routeName, units: units, navigation: navigation)
     }
 
     private var title: String { text.title }
@@ -166,6 +171,15 @@ struct RouteStatusText {
     var follower: RouteFollower
     var routeName: String
     var units: UnitSystem
+    /// Set when navigating to a place: progress reads as distance and time left.
+    var navigation: Navigation? = nil
+
+    /// Navigating: "3.3 mi · 12 min left". Otherwise: "3.2 of 11.5 mi · 28%".
+    private var progress: String {
+        guard let navigation else { return units.progress(follower) }
+        let left = units.distance(follower.remaining).formatted(.number.precision(.fractionLength(1)))
+        return "\(left) \(units.distanceLabel) · \(Navigation.timeLeftText(navigation.timeLeft(remaining: follower.remaining)))"
+    }
 
     var cue: Cue? {
         switch status {
@@ -185,7 +199,7 @@ struct RouteStatusText {
         case .approaching, .offRoute: return "exclamationmark.triangle.fill"
         case .onRoute: return "point.topleft.down.to.point.bottomright.curvepath"
         case .backOnRoute: return "checkmark.circle.fill"
-        case .finished: return "flag.checkered"
+        case .finished: return navigation == nil ? "flag.checkered" : "mappin.circle.fill"
         }
     }
 
@@ -198,10 +212,10 @@ struct RouteStatusText {
         switch status {
         case .approaching(let distance, _, _):
             return distance.map { "Route \(units.shortDistance($0)) away" } ?? "Head to the route"
-        case .onRoute: return routeName
+        case .onRoute: return navigation == nil ? routeName : "To \(routeName)"
         case .offRoute(let distance, _, _): return "Off route · \(units.shortDistance(distance))"
         case .backOnRoute: return "Back on route"
-        case .finished: return "Route complete"
+        case .finished: return navigation == nil ? "Route complete" : "Arrived"
         }
     }
 
@@ -210,6 +224,10 @@ struct RouteStatusText {
             switch cue.kind {
             case .turn:
                 return cue.street.map { "onto \($0) · \(units.percent(follower))" } ?? units.progress(follower)
+            case .step:
+                // The distance left is in the map's stats strip; here, just the time.
+                let timeLeft = navigation.map { Navigation.timeLeftText($0.timeLeft(remaining: follower.remaining)) }
+                return ["In \(units.shortDistance(cue.distance))", timeLeft].compactMap { $0 }.joined(separator: " · ")
             case .leg(.toStart, _):
                 return "In \(units.shortDistance(cue.distance)) · Riding to the start"
             case .leg(.backToRoute, _):
@@ -218,8 +236,10 @@ struct RouteStatusText {
         }
         switch status {
         case .approaching: return routeName
+        case .finished where navigation != nil: return navigation?.destination.subtitle ?? routeName
         case .finished: return "\(routeName) · \(units.distance(follower.length).formatted(.number.precision(.fractionLength(1)))) \(units.distanceLabel)"
-        default: return units.progress(follower)
+        case .offRoute where navigation != nil: return "Finding a new route…"
+        default: return progress
         }
     }
 }

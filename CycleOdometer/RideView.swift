@@ -88,8 +88,8 @@ struct RideView: View {
             }
 
             if let follower = ride.follower, let status = routeStatus {
-                RouteStatusCard(status: status, follower: follower,
-                                routeName: ride.route?.name ?? "Route", heading: ride.heading)
+                RouteStatusCard(status: status, follower: follower, routeName: ride.routeName,
+                                navigation: ride.navigation, heading: ride.heading)
             }
 
             Spacer(minLength: 0)

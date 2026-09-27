@@ -31,10 +31,15 @@ final class FakeDirections: DirectionsProvider {
     private(set) var streetLookups = 0
     private(set) var routeRequests = 0
 
-    func cyclingRoute(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async throws -> DirectionsRoute {
+    /// Every request's destination, in order.
+    private(set) var destinations: [CLLocationCoordinate2D] = []
+
+    func cyclingRoutes(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D,
+                       alternatives: Bool) async throws -> [DirectionsRoute] {
         routeRequests += 1
+        destinations.append(to)
         guard let route else { throw Unavailable() }
-        return route
+        return [route]
     }
 
     func streetName(near: CLLocationCoordinate2D) async throws -> String? {

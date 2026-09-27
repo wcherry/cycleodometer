@@ -5,6 +5,7 @@ struct CycleOdometerApp: App {
     @State private var ride = RideTracker()
     @State private var history = RideHistory()
     @State private var routes = RouteLibrary()
+    @State private var destinations = RecentDestinations()
     /// The result of opening a GPX file from another app.
     @State private var importMessage: String?
 
@@ -20,6 +21,7 @@ struct CycleOdometerApp: App {
             .environment(ride)
             .environment(history)
             .environment(routes)
+            .environment(destinations)
             // A .gpx file opened in Cycle from Files, Mail, AirDrop or another app.
             .onOpenURL { url in
                 do {
