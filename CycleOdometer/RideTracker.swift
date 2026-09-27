@@ -29,6 +29,9 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     private(set) var grade: Double?
     /// Whether this device has a barometer, without which there's no grade at all.
     let canMeasureGrade = CMAltimeter.isRelativeAltitudeAvailable()
+    /// The track as drawn on the live map: one polyline per segment, simplified so a
+    /// long ride doesn't redraw tens of thousands of points on every fix.
+    private(set) var mapTrack: [[CLLocationCoordinate2D]] = []
 
     private var accumulated: TimeInterval = 0
     @ObservationIgnored private var startDate = Date.now
@@ -36,6 +39,13 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
 
     @ObservationIgnored private let manager = CLLocationManager()
     @ObservationIgnored private var lastLocation: CLLocation?
+    @ObservationIgnored private var recorder = TrackRecorder()
+    /// Points added to the last map polyline since it was last simplified.
+    @ObservationIgnored private var unsimplifiedCount = 0
+
+    /// Re-simplify the map polyline after this many new points, to about 3 m.
+    private static let mapSimplifyInterval = 200
+    private static let mapSimplifyTolerance = 3.0
 
     // Grade: barometric altitude against GPS distance. Kept apart from `distance`,
     // which stops while the timer is paused.
@@ -73,6 +83,9 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         gradeDistance = 0
         gradeLocation = nil
         gradeSamples = []
+        recorder.reset()
+        mapTrack = []
+        unsimplifiedCount = 0
         startDate = .now
         isActive = true
 
@@ -96,9 +109,9 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         resume()
     }
 
-    /// Stops tracking and returns the finished ride's summary.
+    /// Stops tracking and returns the finished ride's summary and its track.
     @discardableResult
-    func end() -> RideRecord {
+    func end() -> (record: RideRecord, track: Track) {
         pause()
         manager.stopUpdatingLocation()
         manager.stopUpdatingHeading()
@@ -107,7 +120,8 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
         manager.allowsBackgroundLocationUpdates = false
         UIApplication.shared.isIdleTimerDisabled = false
         isActive = false
-        return RideRecord(date: startDate, duration: accumulated, distance: distance, topSpeed: maxSpeed)
+        let record = RideRecord(date: startDate, duration: accumulated, distance: distance, topSpeed: maxSpeed)
+        return (record, recorder.track)
     }
 
     func toggleTimer() {
@@ -117,8 +131,10 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
     private func resume() {
         guard !isRunning else { return }
         runningSince = .now
-        // Don't bridge the gap between stop and start with a straight-line distance.
+        // Don't bridge the gap between stop and start with a straight-line distance,
+        // on the odometer or on the map.
         lastLocation = nil
+        recorder.breakSegment()
         isRunning = true
     }
 
@@ -152,6 +168,25 @@ final class RideTracker: NSObject, CLLocationManagerDelegate {
                 distance += location.distance(from: last)
             }
             lastLocation = location
+            record(location)
+        }
+    }
+
+    private func record(_ location: CLLocation) {
+        let segmentCount = recorder.track.segments.count
+        guard recorder.record(location) else { return }
+
+        if recorder.track.segments.count > segmentCount || mapTrack.isEmpty {
+            mapTrack.append([location.coordinate])
+            unsimplifiedCount = 0
+            return
+        }
+        mapTrack[mapTrack.count - 1].append(location.coordinate)
+        unsimplifiedCount += 1
+        if unsimplifiedCount >= Self.mapSimplifyInterval, let segment = recorder.track.segments.last {
+            mapTrack[mapTrack.count - 1] = Simplify.coordinates(
+                segment.map(\.coordinate), tolerance: Self.mapSimplifyTolerance)
+            unsimplifiedCount = 0
         }
     }
 

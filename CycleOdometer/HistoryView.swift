@@ -19,7 +19,9 @@ struct HistoryView: View {
                     List {
                         Section {
                             ForEach(history.rides) { ride in
-                                RideRow(ride: ride, units: units)
+                                NavigationLink(value: ride) {
+                                    RideRow(ride: ride, units: units)
+                                }
                             }
                             .onDelete(perform: history.delete)
                         } footer: {
@@ -29,6 +31,9 @@ struct HistoryView: View {
                         }
                     }
                 }
+            }
+            .navigationDestination(for: RideRecord.self) { ride in
+                RideDetailView(ride: ride, history: history)
             }
             .navigationTitle("Ride History")
             .navigationBarTitleDisplayMode(.inline)

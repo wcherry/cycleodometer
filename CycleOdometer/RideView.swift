@@ -10,10 +10,19 @@ struct RideView: View {
     @State private var flashlight = Flashlight()
     /// When the warning flasher was switched on, or nil when it's off.
     @State private var warningSince: Date?
+    @State private var showingMap = false
 
     private let buttonSpacing: CGFloat = 16
 
     var body: some View {
+        if showingMap {
+            RideMapView(ride: ride) { showingMap = false }
+        } else {
+            gauge
+        }
+    }
+
+    private var gauge: some View {
         VStack(spacing: 20) {
             // 95% of the screen width, reaching past the page padding; the ring, its labels
             // and the top-speed bug all sit inside the gauge's own frame.
@@ -31,8 +40,9 @@ struct RideView: View {
 
             HStack(spacing: 16) {
                 StatTile(title: "DISTANCE") {
-                    Text(units.distance(ride.distance), format: .number.precision(.fractionLength(2)))
-                        + Text(" \(units.distanceLabel)").font(.title3).foregroundStyle(.secondary)
+                    let value = Text(units.distance(ride.distance), format: .number.precision(.fractionLength(2)))
+                    let unit = Text(units.distanceLabel).font(.title3).foregroundStyle(.secondary)
+                    Text("\(value) \(unit)")
                 }
                 StatTile(title: "TIME") {
                     TimelineView(.periodic(from: .now, by: 0.1)) { context in
@@ -72,8 +82,20 @@ struct RideView: View {
         }
         .padding()
         .overlay(alignment: .topTrailing) {
-            SettingsButton()
-                .padding(.trailing, 8)
+            HStack(spacing: 4) {
+                Button {
+                    showingMap = true
+                } label: {
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(Color.white.opacity(0.7))
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Map")
+                SettingsButton()
+            }
+            .padding(.trailing, 8)
         }
         .overlay(alignment: .topLeading) {
             CompassView(heading: ride.heading)
@@ -86,7 +108,8 @@ struct RideView: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         if flashlight.isOn { flashlight.toggle() }
         warningSince = nil
-        history.add(ride.end())
+        let finished = ride.end()
+        history.add(finished.record, track: finished.track)
     }
 
     /// Tap toggles the flashlight; a long press toggles the red warning flasher.
